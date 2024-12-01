@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+    --muted: 100 116 139;
+    --accent: 99 102 241;
+    --accent-foreground: 255 255 255;
+    /* Cyberpunk Theme Additions */
+    --cyberpunk-background: #0a0a1a;
+    --cyberpunk-text: #e0e0ff;
+    --cyberpunk-accent: #00ffff;
+  }
+
+  .dark {
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+    --muted: 148 163 184;
+    --accent: 129 140 248;
+    --accent-foreground: 255 255 255;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Orbitron', sans-serif;
+    background-color: var(--cyberpunk-background);
+    color: var(--cyberpunk-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted;
+}
+
+/* Selection color */
+::selection {
+  background: rgb(var(--foreground) / 0.1);
+}
+
+/* Focus outline */
+*:focus-visible {
+  outline: 2px solid rgb(var(--foreground) / 0.5);
+  outline-offset: 2px;
+}
+
+/* Glow effects */
+.cyberpunk-glow {
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.cyberpunk-border {
+  border: 2px solid var(--cyberpunk-accent);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+/* Additional global styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyberpunk-accent) var(--cyberpunk-background);
+}
+
+/* Scrollbar for WebKit browsers */
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--cyberpunk-background);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--cyberpunk-accent);
+  border-radius: 20px;
+}
+
+/* Hover and focus states */
+a, button {
+  transition: all 0.3s ease;
+}
+
+a:hover, button:hover {
+  color: var(--cyberpunk-accent);
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+/* Animated border effect */
+@keyframes border-dance {
+  0% {
+    border-color: transparent var(--cyberpunk-accent) transparent transparent;
+  }
+  25% {
+    border-color: transparent transparent var(--cyberpunk-accent) transparent;
+  }
+  50% {
+    border-color: transparent transparent transparent var(--cyberpunk-accent);
+  }
+  75% {
+    border-color: var(--cyberpunk-accent) transparent transparent transparent;
+  }
+  100% {
+    border-color: transparent var(--cyberpunk-accent) transparent transparent;
+  }
+}
+
+.cyberpunk-animated-border {
+  border: 2px solid transparent;
+  animation: border-dance 2s linear infinite;
+}
+
+@layer utilities {
+  .bg-background {
+    background-color: rgb(var(--background));
+  }
+  .bg-foreground {
+    background-color: rgb(var(--foreground));
+  }
+  .bg-accent {
+    background-color: rgb(var(--accent));
+  }
+  .text-foreground {
+    color: rgb(var(--foreground));
+  }
+  .text-muted {
+    color: rgb(var(--muted));
+  }
+  .text-accent {
+    color: rgb(var(--accent));
+  }
+  .border-accent {
+    border-color: rgb(var(--accent));
+  }
+}
