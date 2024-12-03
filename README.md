@@ -1,5 +1,7 @@
 # DevoApp - Developer Portfolio Platform
 
+![DevoApp Landing Page](/public/screenshots/landing-page.png)
+
 A modern, sleek developer portfolio platform built with Next.js and Tailwind CSS. Create stunning portfolios, showcase your projects, and connect with other developers.
 
 ## 🚀 Features
