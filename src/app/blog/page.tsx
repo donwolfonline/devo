@@ -88,7 +88,23 @@ const blogPosts = [
   }
 ];
 
-const BlogPostCard = ({ post, index }) => {
+interface BlogPostCardProps {
+  post: {
+    id: string;
+    title: string;
+    description: string;
+    image: string;
+    author: string;
+    date: string;
+    readTime: string;
+    category: string;
+    tags: string[];
+    featured?: boolean;
+  };
+  index: number;
+}
+
+const BlogPostCard = ({ post, index }: BlogPostCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -168,7 +184,11 @@ const BlogPostCard = ({ post, index }) => {
             <BookOpen className="w-4 h-4" />
             Read More
           </Link>
-          <button className="text-muted-foreground hover:text-primary transition-colors">
+          <button 
+            type="button" 
+            className="text-muted-foreground hover:text-primary transition-colors"
+            aria-label="Bookmark this blog post"
+          >
             <BookmarkPlus className="w-5 h-5" />
           </button>
         </div>

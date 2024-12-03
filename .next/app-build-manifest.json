@@ -21,60 +21,110 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/auth/[...nextauth]/route.js"
     ],
-    "/dashboard/layout": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/layout.js"
+      "static/chunks/app/_not-found/page.js"
     ],
-    "/dashboard/page": [
+    "/link-in-bio/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/page.js"
+      "static/chunks/app/link-in-bio/page.js"
     ],
-    "/api/dashboard/stats/route": [
+    "/superadmin/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/dashboard/stats/route.js"
+      "static/chunks/app/superadmin/layout.js"
     ],
-    "/[username]/page": [
+    "/superadmin/dashboard/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/[username]/page.js"
+      "static/chunks/app/superadmin/dashboard/layout.js"
     ],
-    "/dashboard/settings/page": [
+    "/superadmin/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/settings/page.js"
+      "static/chunks/app/superadmin/dashboard/page.js"
     ],
-    "/dashboard/projects/page": [
+    "/demo/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/projects/page.js"
-    ],
-    "/dashboard/portfolio/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/dashboard/portfolio/page.js"
+      "static/chunks/app/demo/page.js"
     ],
     "/auth/sign-in/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/auth/sign-in/page.js"
     ],
-    "/profile/page": [
+    "/auth/sign-up/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/profile/page.js"
+      "static/chunks/app/auth/sign-up/page.js"
     ],
-    "/api/users/[username]/route": [
+    "/superadmin/dashboard/analytics/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/users/[username]/route.js"
+      "static/chunks/app/superadmin/dashboard/analytics/page.js"
+    ],
+    "/superadmin/dashboard/users/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/superadmin/dashboard/users/page.js"
     ],
     "/api/users/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/users/route.js"
+    ],
+    "/api/users/toggle-status/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/users/toggle-status/route.js"
+    ],
+    "/superadmin/dashboard/security/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/superadmin/dashboard/security/page.js"
+    ],
+    "/superadmin/dashboard/projects/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/superadmin/dashboard/projects/page.js"
+    ],
+    "/superadmin/dashboard/settings/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/superadmin/dashboard/settings/page.js"
+    ],
+    "/api/auth/signout/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/auth/signout/route.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
+    ],
+    "/register/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/register/page.js"
+    ],
+    "/explore/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/explore/page.js"
+    ],
+    "/templates/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/templates/page.js"
+    ],
+    "/register/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/register/route.js"
     ]
   }
 }

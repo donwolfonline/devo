@@ -1,40 +1,39 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-export default function SignIn() {
+function SignInContent() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
     try {
       const result = await signIn('credentials', {
+        redirect: false,
         email,
         password,
-        redirect: false,
-        callbackUrl: '/dashboard',
       });
 
-      if (!result?.ok) {
-        setError(result?.error || 'Failed to sign in');
-        return;
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        router.push(callbackUrl);
       }
-
-      router.push('/dashboard');
-      router.refresh();
     } catch (err) {
       setError('An unexpected error occurred');
     } finally {
@@ -43,87 +42,112 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#1a1a2a] to-[#2a2a3a] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-gray-900/50 border border-gray-800 rounded-xl p-8 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h2 className="text-3xl font-bold">Welcome back</h2>
-          <p className="mt-2 text-muted">
-            Sign in to continue building your portfolio
+          <h2 className="text-3xl font-bold text-white">Welcome back</h2>
+          <p className="mt-2 text-gray-400">
+            Sign in to continue to your portfolio
           </p>
         </motion.div>
 
         <motion.form
-          onSubmit={handleSubmit}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mt-8 space-y-6"
+          onSubmit={handleSubmit}
+          className="space-y-6"
         >
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
+          {error && (
+            <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-lg">
+              {error}
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
+          )}
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 block w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg 
+                       text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 
+                       focus:ring-1 focus:ring-purple-500 transition-colors"
+              placeholder="Enter your email"
+            />
           </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-red-500 text-sm text-center"
-            >
-              {error}
-            </motion.div>
-          )}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1 block w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg 
+                       text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 
+                       focus:ring-1 focus:ring-purple-500 transition-colors"
+              placeholder="Enter your password"
+            />
+            <div className="mt-2 flex justify-end">
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
 
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent 
+                       text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-950 via-purple-800 to-purple-950
+                       hover:from-purple-900 hover:via-purple-700 hover:to-purple-900
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500
+                       transition-all duration-200 transform hover:scale-[1.02]
+                       shadow-[0_0_20px_rgba(88,28,135,0.5)] hover:shadow-[0_0_30px_rgba(147,51,234,0.7)]"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                'Sign In'
+              )}
             </button>
           </div>
 
-          <div className="text-sm text-center">
+          <div className="text-center text-sm">
+            <span className="text-gray-400">Don't have an account? </span>
             <Link
               href="/auth/sign-up"
-              className="font-medium text-primary hover:text-primary-dark"
+              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
             >
-              Don't have an account? Sign up
+              Sign up
             </Link>
           </div>
         </motion.form>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

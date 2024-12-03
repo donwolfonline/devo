@@ -97,7 +97,21 @@ const examples = [
 const categories = ["All", ...new Set(examples.map(example => example.category))];
 const allTags = Array.from(new Set(examples.flatMap(example => example.tags)));
 
-const ExampleCard = ({ example, index }) => {
+type Example = {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  tags: string[];
+  author: string;
+  likes: number;
+  views: number;
+  demoUrl: string;
+  featured: boolean;
+};
+
+const ExampleCard = ({ example, index }: { example: Example; index: number }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -187,7 +201,11 @@ const ExampleCard = ({ example, index }) => {
             </div>
             <span className="text-sm text-muted-foreground">{example.author}</span>
           </div>
-          <button className="p-2 rounded-full hover:bg-accent/10 text-muted-foreground transition-colors">
+          <button 
+            type="button" 
+            className="p-2 rounded-full hover:bg-accent/10 text-muted-foreground transition-colors"
+            aria-label="Share this example"
+          >
             <Share2 className="w-4 h-4" />
           </button>
         </div>

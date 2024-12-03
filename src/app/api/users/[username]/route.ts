@@ -1,17 +1,19 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(
-  request: Request,
+  req: NextRequest, 
   { params }: { params: { username: string } }
 ) {
   try {
-    const username = params.username;
+    const { username } = params;
     
     // Remove the @ symbol if present
     const cleanUsername = username.replace('@', '');
 
-    const user = await prisma.user.findFirst({
+    const user = await prisma.user.findUnique({
       where: {
         OR: [
           { username: cleanUsername },
@@ -21,76 +23,90 @@ export async function GET(
       select: {
         id: true,
         name: true,
-        image: true,
+        email: true,
         username: true,
+        role: true,
         bio: true,
-        location: true,
-        company: true,
-        website: true,
-        github: true,
-        linkedin: true,
-        twitter: true,
+        image: true,
         projects: {
-          where: {
-            featured: true,
-          },
           select: {
             id: true,
             title: true,
             description: true,
-            imageUrl: true,
-            demoUrl: true,
-            githubUrl: true,
-            technologies: true,
-            featured: true,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        portfolioStats: {
-          select: {
-            portfolioViews: true,
-            profileVisits: true,
-          },
-        },
-      },
+            image: true,
+            createdAt: true
+          }
+        }
+      }
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Create or update portfolio stats
-    const stats = await prisma.portfolioStats.upsert({
-      where: {
-        userId: user.id,
-      },
-      create: {
-        userId: user.id,
-        portfolioViews: 1,
-        profileVisits: 1,
-      },
-      update: {
-        profileVisits: {
-          increment: 1,
-        },
-      },
-    });
-
-    // Return user data with updated stats
-    return NextResponse.json({
-      ...user,
-      portfolioStats: stats,
-    });
+    return NextResponse.json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { username: string } }
+) {
+  try {
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only super admins can update users
+    if (session.user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { username } = params;
+    const data = await req.json();
+
+    const user = await prisma.user.update({
+      where: { username },
+      data
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { username: string } }
+) {
+  try {
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only super admins can delete users
+    if (session.user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { username } = params;
+
+    await prisma.user.delete({
+      where: { username }
+    });
+
+    return NextResponse.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -2,13 +2,22 @@
 
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { templates } from '@/lib/sampleData';
 import Image from 'next/image';
+import Navbar from '@/components/Navbar';
+import Link from 'next/link';
 
 export default function TemplatesPage() {
   const router = useRouter();
   const { data: session } = useSession();
+
+  const navItems = [
+    { href: "/explore", label: "Explore" },
+    { href: "/link-in-bio", label: "Link in Bio" },
+    { href: "/templates", label: "Templates" },
+    { href: "/pricing", label: "Pricing" }
+  ];
 
   const handleTemplateSelect = async (templateId: string) => {
     if (!session) {
@@ -19,58 +28,67 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
-        <h1 className="text-4xl font-bold mb-4">Choose Your Template</h1>
-        <p className="text-lg text-muted">
-          Select a template to start building your portfolio
-        </p>
-      </motion.div>
+    <main className="min-h-screen bg-black">
+      <div className="relative">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#9333EA]/10 via-[#A855F7]/5 to-transparent pointer-events-none" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {templates.map((template, index) => (
-          <motion.div
-            key={template.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group relative bg-foreground/5 rounded-lg overflow-hidden border border-accent/10 hover:border-accent/20 transition-colors duration-200"
-          >
-            <div className="aspect-[16/9] relative bg-foreground/10">
-              <Image
-                src={template.image}
-                alt={template.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="p-6">
-              <h3 className="text-lg font-medium mb-2">{template.name}</h3>
-              <p className="text-sm text-muted mb-4">{template.description}</p>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {template.features.map((feature) => (
-                  <span
-                    key={feature}
-                    className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent"
+        {/* Main Content */}
+        <div className="relative">
+          {/* Navigation */}
+          <Navbar />
+
+          {/* Templates Section */}
+          <div className="container mx-auto px-6 py-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-16"
+            >
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-8">
+                Choose Your Template
+              </h1>
+              <p className="text-xl text-gray-300 mb-12">
+                Select a template to showcase your work in style
+              </p>
+
+              {/* Templates Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {templates.map((template, index) => (
+                  <motion.div
+                    key={template.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-black/50 border border-[#9333EA]/20 rounded-lg p-6 hover:border-[#9333EA]/40 transition-all duration-300"
                   >
-                    {feature}
-                  </span>
+                    <div className="aspect-w-16 aspect-h-9 mb-4">
+                      <Image
+                        src={template.image}
+                        alt={template.name}
+                        className="rounded-lg object-cover"
+                        width={400}
+                        height={225}
+                      />
+                    </div>
+                    <h3 className="text-xl font-semibold text-white mb-2">{template.name}</h3>
+                    <p className="text-gray-400 mb-4">{template.description}</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#9333EA]"></span>
+                      <button
+                        onClick={() => handleTemplateSelect(template.id)}
+                        className="px-6 py-2 bg-black border-2 border-[#9333EA] rounded-full text-white hover:bg-[#9333EA]/10 focus:outline-none focus:ring-2 focus:ring-[#9333EA] transition-colors duration-200"
+                      >
+                        Use Template
+                      </button>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
-              <button
-                onClick={() => handleTemplateSelect(template.id)}
-                className="w-full px-4 py-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium transition-colors duration-200"
-              >
-                Use Template
-              </button>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

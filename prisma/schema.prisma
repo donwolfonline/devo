@@ -6,84 +6,119 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  username      String    @unique
+  name          String?
+  email         String    @unique
+  password      String
+  role          Role      @default(USER)
+  emailVerified DateTime?
+  image         String?
+  isActive      Boolean   @default(true)
+  failedLoginAttempts Int  @default(0)
+  lockUntil     DateTime?
+  lastLogin     DateTime?
+  passwordChangedAt DateTime?
+  lastImpersonationAttempt DateTime?
+  lastImpersonatedUserId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  experiences   Experience[]
+  projects      Project[]
+
+  @@map("users")
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String? @db.String
+  access_token      String? @db.String
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String? @db.String
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   sessionToken String   @unique
-  userId       String
+  userId       String   @db.ObjectId
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  username      String?   @unique
-  bio           String?   @db.Text
-  location      String?
-  company       String?
-  website       String?
-  github        String?
-  linkedin      String?
-  twitter       String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  // Theme preference
-  theme         String    @default("cyberpunk")
-  
-  accounts      Account[]
-  sessions      Session[]
-  projects      Project[]
-  portfolioStats PortfolioStats?
-}
+model Experience {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  company       String
+  startDate     DateTime
+  endDate       DateTime?
+  description   String?
+  isCurrentRole Boolean   @default(false)
 
-model PortfolioStats {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  portfolioViews Int     @default(0)
-  profileVisits Int      @default(0)
-  lastUpdated   DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id])
+  @@map("experiences")
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  imageUrl    String?
-  demoUrl     String?
-  githubUrl   String?
-  technologies String[]
-  featured    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  description   String?
+  userId        String    @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        ProjectStatus @default(ACTIVE)
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
+  isPublic      Boolean   @default(false)
+  tags          String[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("projects")
+}
+
+model SystemSettings {
+  id                 String   @id @map("_id")
+  maintenanceMode    Boolean  @default(false)
+  maxUserAccounts    Int      @default(1000)
+  defaultUserRole    String   @default("USER")
+  analyticsTracking  Boolean  @default(true)
+  emailNotifications Boolean  @default(true)
+
+  @@map("system_settings")
 }

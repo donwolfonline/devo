@@ -53,108 +53,96 @@ export default function PortfolioEditor() {
           </div>
         )}
 
-        {/* Basic Information */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-lg font-medium text-foreground mb-4">Basic Information</h2>
-          <div className="space-y-4">
+        {/* Basic Information Section */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-1">
-                Display Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-                defaultValue="John Doe"
+              <label htmlFor="name" className="block mb-2">Full Name</label>
+              <input 
+                type="text" 
+                id="name" 
+                className="w-full p-2 border rounded-md" 
+                placeholder="John Doe"
               />
             </div>
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-foreground mb-1">
-                Professional Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-                defaultValue="Full Stack Developer"
-              />
-            </div>
-            <div>
-              <label htmlFor="bio" className="block text-sm font-medium text-foreground mb-1">
-                Bio
-              </label>
-              <textarea
-                id="bio"
-                name="bio"
-                rows={4}
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-                defaultValue="A passionate developer with experience in building modern web applications..."
+              <label htmlFor="title" className="block mb-2">Professional Title</label>
+              <input 
+                type="text" 
+                id="title" 
+                className="w-full p-2 border rounded-md" 
+                placeholder="Software Engineer"
               />
             </div>
           </div>
         </div>
 
-        {/* Social Links */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-lg font-medium text-foreground mb-4">Social Links</h2>
-          <div className="space-y-4">
+        {/* Contact Information Section */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Contact</h2>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="github" className="block text-sm font-medium text-foreground mb-1">
-                GitHub Profile
-              </label>
-              <input
-                type="url"
-                id="github"
-                name="github"
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-                placeholder="https://github.com/yourusername"
+              <label htmlFor="email" className="block mb-2">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                className="w-full p-2 border rounded-md" 
+                placeholder="john@example.com"
               />
             </div>
             <div>
-              <label htmlFor="linkedin" className="block text-sm font-medium text-foreground mb-1">
-                LinkedIn Profile
-              </label>
-              <input
-                type="url"
-                id="linkedin"
-                name="linkedin"
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-                placeholder="https://linkedin.com/in/yourusername"
+              <label htmlFor="phone" className="block mb-2">Phone</label>
+              <input 
+                type="tel" 
+                id="phone" 
+                className="w-full p-2 border rounded-md" 
+                placeholder="+1 (123) 456-7890"
               />
             </div>
           </div>
         </div>
 
-        {/* Skills */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-lg font-medium text-foreground mb-4">Skills</h2>
-          <div>
-            <label htmlFor="skills" className="block text-sm font-medium text-foreground mb-1">
-              Technical Skills
-            </label>
-            <input
-              type="text"
-              id="skills"
-              name="skills"
-              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/50"
-              placeholder="React, TypeScript, Node.js..."
-            />
-            <p className="mt-1 text-sm text-muted-foreground">
-              Separate skills with commas
-            </p>
+        {/* Social Links Section */}
+        <div className="bg-background border border-border rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Social Links</h2>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <label htmlFor="github" className="w-1/4">GitHub</label>
+              <input 
+                type="url" 
+                id="github" 
+                className="flex-1 p-2 border rounded-md" 
+                placeholder="https://github.com/username"
+              />
+            </div>
+            <div className="flex items-center space-x-4">
+              <label htmlFor="linkedin" className="w-1/4">LinkedIn</label>
+              <input 
+                type="url" 
+                id="linkedin" 
+                className="flex-1 p-2 border rounded-md" 
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
           </div>
         </div>
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <button
-            type="submit"
+          <button 
+            type="submit" 
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-colors duration-200 disabled:opacity-50"
+            className="
+              bg-primary text-white 
+              px-6 py-2 rounded-md 
+              hover:bg-primary-dark 
+              transition-colors
+              disabled:opacity-50
+              disabled:cursor-not-allowed
+            "
           >
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? 'Saving...' : 'Save Portfolio'}
           </button>
         </div>
       </motion.form>

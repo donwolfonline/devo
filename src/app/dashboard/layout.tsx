@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import DashboardNav from '@/components/DashboardNav';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -61,12 +61,16 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/sign-in?callbackUrl=/dashboard');
+      router.replace('/auth/sign-in?callbackUrl=/dashboard');
     }
   }, [status, router]);
 
   if (status === 'loading') {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-accent"></div>
+      </div>
+    );
   }
 
   if (!session) {
@@ -74,7 +78,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardNav />
       
       <div className="flex">
@@ -82,7 +86,7 @@ export default function DashboardLayout({
         <motion.div
           initial={false}
           animate={{ width: isSidebarOpen ? 'auto' : '0' }}
-          className={`bg-white border-r border-gray-200 ${
+          className={`bg-card border-r border-border ${
             isSidebarOpen ? 'w-64' : 'w-0'
           } transition-all duration-300 overflow-hidden`}
         >
@@ -95,8 +99,8 @@ export default function DashboardLayout({
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-accent text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {item.icon}
@@ -107,30 +111,32 @@ export default function DashboardLayout({
           </nav>
         </motion.div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="fixed bottom-4 left-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+        {/* Toggle button */}
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="fixed bottom-4 left-4 p-2 bg-accent text-accent-foreground rounded-full shadow-lg hover:bg-accent/90 transition-colors"
+        >
+          <svg
+            className={`w-6 h-6 transition-transform ${
+              isSidebarOpen ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <svg
-              className={`w-6 h-6 transform transition-transform ${
-                isSidebarOpen ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+
+        {/* Main content */}
+        <main className="flex-1 p-8">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );

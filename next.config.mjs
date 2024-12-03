@@ -6,28 +6,20 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'github.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: '/:username',
-        destination: '/[username]',
-      },
-    ];
-  },
-  async headers() {
-    return [
-      {
-        source: '/:username',
-        headers: [
-          {
-            key: 'X-Subdomain-Profile',
-            value: 'true',
-          },
-        ],
-      },
-    ];
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000'],
+    },
   },
 }
 

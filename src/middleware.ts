@@ -1,48 +1,78 @@
 import { NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
-import { prisma } from './lib/prisma';
+
+// Add type definition for token
+interface CustomToken {
+  role?: 'USER' | 'SUPER_ADMIN' | 'ADMIN';
+  id?: string;
+  email?: string;
+  username?: string;
+}
 
 export async function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || '';
-  const subdomain = hostname.split('.')[0];
+  const path = request.nextUrl.pathname;
 
-  // Check if the request is for a subdomain (excluding www and the main domain)
-  const subdomainRegex = /^[a-zA-Z0-9-]+$/;
-  if (
-    subdomainRegex.test(subdomain) && 
-    subdomain !== 'www' && 
-    !['localhost', 'devshowcase'].includes(subdomain)
-  ) {
-    try {
-      // Verify if the subdomain matches a valid username
-      const user = await prisma.user.findFirst({
-        where: { 
-          OR: [
-            { username: subdomain },
-            { email: `${subdomain}@example.com` }
-          ]
-        },
-        select: { username: true }
-      });
+  // Get the token and decode it
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET
+  }) as CustomToken | null;
 
-      if (user) {
-        // Rewrite the request to the dynamic username route
-        return NextResponse.rewrite(
-          new URL(`/${user.username}`, request.url)
+  console.log('Middleware Check:', {
+    path,
+    hasToken: !!token,
+    tokenRole: token?.role,
+    method: request.method,
+    url: request.url
+  });
+
+  // Check if it's an API route
+  if (path.startsWith('/api/')) {
+    // For API routes that require authentication
+    if (path.startsWith('/api/users/')) {
+      if (!token) {
+        console.log('API route - unauthorized');
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
         );
       }
-    } catch (error) {
-      console.error('Subdomain lookup error:', error);
+
+      // For superadmin-only routes
+      if (path.includes('/toggle-status')) {
+        if (token.role !== 'SUPER_ADMIN') {
+          console.log('API route - forbidden');
+          return NextResponse.json(
+            { error: 'Forbidden' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // Handle non-API routes
+  if (path.startsWith('/superadmin')) {
+    if (!token) {
+      console.log('Superadmin route - no token');
+      return NextResponse.redirect(new URL('/auth/sign-in', request.url));
+    }
+
+    if (token.role !== 'SUPER_ADMIN') {
+      console.log('Superadmin route - not super admin');
+      return NextResponse.redirect(new URL('/auth/sign-in', request.url));
     }
   }
 
-  // Continue with normal routing
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Match all routes except static files and API routes
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
-}
+    '/superadmin',
+    '/superadmin/dashboard/:path*',
+    '/api/users/:path*',
+  ]
+};

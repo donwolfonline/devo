@@ -144,7 +144,11 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
             Enjoyed this article? Share it with others.
           </p>
           <div className="flex items-center gap-4">
-            <button className="text-muted-foreground hover:text-primary transition-colors">
+            <button 
+              type="button" 
+              aria-label="Share article" 
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
               <Share2 className="w-6 h-6" />
             </button>
           </div>
