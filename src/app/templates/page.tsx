@@ -7,6 +7,8 @@ import { templates } from '@/lib/sampleData';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import { MouseFollower, FloatingDots } from '@/components/BackgroundElements';
+import { SpaceBackground } from '@/components/SpaceBackground';
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -28,67 +30,81 @@ export default function TemplatesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black">
-      <div className="relative">
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#9333EA]/10 via-[#A855F7]/5 to-transparent pointer-events-none" />
+    <div className="min-h-screen relative bg-gradient-to-b from-black via-purple-950/5 to-black">
+      <SpaceBackground />
+      <main className="flex min-h-screen flex-col relative overflow-hidden">
+        <MouseFollower />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <FloatingDots />
+        </div>
 
-        {/* Main Content */}
-        <div className="relative">
-          {/* Navigation */}
-          <Navbar />
+        {/* Background gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-950/20 via-black to-purple-950/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-purple-900/10 via-transparent to-transparent pointer-events-none mix-blend-screen" />
 
-          {/* Templates Section */}
-          <div className="container mx-auto px-6 py-20">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-16"
-            >
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-8">
-                Choose Your Template
-              </h1>
-              <p className="text-xl text-gray-300 mb-12">
-                Select a template to showcase your work in style
-              </p>
+        {/* Content */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-300 mb-4">
+              Choose Your Template
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-300/90 max-w-2xl mx-auto">
+              Select from our collection of professionally designed templates to create your perfect portfolio.
+            </p>
+          </div>
 
-              {/* Templates Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {templates.map((template, index) => (
-                  <motion.div
-                    key={template.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-black/50 border border-[#9333EA]/20 rounded-lg p-6 hover:border-[#9333EA]/40 transition-all duration-300"
-                  >
-                    <div className="aspect-w-16 aspect-h-9 mb-4">
-                      <Image
-                        src={template.image}
-                        alt={template.name}
-                        className="rounded-lg object-cover"
-                        width={400}
-                        height={225}
-                      />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">{template.name}</h3>
-                    <p className="text-gray-400 mb-4">{template.description}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[#9333EA]"></span>
-                      <button
-                        onClick={() => handleTemplateSelect(template.id)}
-                        className="px-6 py-2 bg-black border-2 border-[#9333EA] rounded-full text-white hover:bg-[#9333EA]/10 focus:outline-none focus:ring-2 focus:ring-[#9333EA] transition-colors duration-200"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {templates.map((template, index) => (
+              <motion.div
+                key={template.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                onClick={() => handleTemplateSelect(template.id)}
+                className="group relative bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden hover:bg-white/10 transition-colors cursor-pointer border border-purple-500/10"
+              >
+                <div className="aspect-w-16 aspect-h-9 relative">
+                  <Image
+                    src={template.image}
+                    alt={template.name}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-white/90 mb-2">{template.name}</h3>
+                  <p className="text-gray-300/80 mb-4">{template.description}</p>
+                  
+                  {/* Features */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {template.features.map((feature, featureIndex) => (
+                      <span
+                        key={featureIndex}
+                        className="px-3 py-1 text-sm bg-purple-500/10 text-purple-300/90 rounded-full border border-purple-500/20"
                       >
-                        Use Template
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Tech Stack */}
+                  <div className="flex flex-wrap gap-2">
+                    {template.techStack.map((tech, techIndex) => (
+                      <span
+                        key={techIndex}
+                        className="px-3 py-1 text-sm bg-purple-900/20 text-purple-200/90 rounded-full border border-purple-400/20"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

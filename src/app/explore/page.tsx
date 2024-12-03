@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import { Search, Filter, Star, ThumbsUp, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { SpaceBackground } from '@/components/SpaceBackground';
+import { MouseFollower, FloatingDots } from '@/components/BackgroundElements';
 
 export default function ExplorePage() {
   const { data: session } = useSession();
@@ -89,169 +91,141 @@ export default function ExplorePage() {
     }
   ];
 
-  const [displayedDevelopers, setDisplayedDevelopers] = useState(allDevelopers.slice(0, itemsPerPage));
-  const [searchTerm, setSearchTerm] = useState('');
-  const [hasMore, setHasMore] = useState(allDevelopers.length > itemsPerPage);
-
-  const loadMore = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const nextItems = allDevelopers.slice(
-        displayedDevelopers.length,
-        displayedDevelopers.length + itemsPerPage
-      );
-      setDisplayedDevelopers([...displayedDevelopers, ...nextItems]);
-      setHasMore(displayedDevelopers.length + nextItems.length < allDevelopers.length);
-      setIsLoading(false);
-    }, 800); // Simulate loading delay
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value.toLowerCase();
-    setSearchTerm(term);
-    
-    if (term === '') {
-      setDisplayedDevelopers(allDevelopers.slice(0, itemsPerPage));
-      setHasMore(allDevelopers.length > itemsPerPage);
-    } else {
-      const filtered = allDevelopers.filter(dev => 
-        dev.name.toLowerCase().includes(term) ||
-        dev.role.toLowerCase().includes(term) ||
-        dev.skills.some(skill => skill.toLowerCase().includes(term))
-      );
-      setDisplayedDevelopers(filtered.slice(0, itemsPerPage));
-      setHasMore(filtered.length > itemsPerPage);
-    }
-  };
+  const totalPages = Math.ceil(allDevelopers.length / itemsPerPage);
+  const currentDevelopers = allDevelopers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
-    <main className="min-h-screen bg-black">
-      <div className="relative">
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#9333EA]/10 via-[#A855F7]/5 to-transparent pointer-events-none" />
+    <div className="min-h-screen relative bg-gradient-to-b from-black via-purple-950/5 to-black">
+      <SpaceBackground />
+      <main className="flex min-h-screen flex-col relative overflow-hidden">
+        <MouseFollower />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <FloatingDots />
+        </div>
 
-        {/* Main Content */}
-        <div className="relative">
+        {/* Background gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-950/20 via-black to-purple-950/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-purple-900/10 via-transparent to-transparent pointer-events-none mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-purple-800/5 via-transparent to-transparent pointer-events-none mix-blend-screen" />
+
+        {/* Content */}
+        <div className="relative z-10">
           <Navbar />
-
-          <div className="container mx-auto px-6 py-20">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-16"
-            >
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-8">
-                Explore Amazing Portfolios
-              </h1>
-              <p className="text-xl text-gray-300 mb-12">
+          
+          {/* Hero Section */}
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <motion.h1 
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-300 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                Explore Developer Portfolios
+              </motion.h1>
+              <motion.p 
+                className="text-lg sm:text-xl text-gray-300/90 mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
                 Discover talented developers and get inspired by their work
-              </p>
+              </motion.p>
 
-              {/* Search and Filter Section */}
-              <div className="flex flex-col md:flex-row justify-center gap-4 mb-12">
-                <div className="relative">
+              {/* Search Bar */}
+              <motion.div
+                className="flex gap-4 max-w-2xl mx-auto"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
                     placeholder="Search developers..."
-                    className="w-full md:w-96 px-4 py-2 pl-10 bg-black/50 border border-[#9333EA]/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#9333EA] focus:border-transparent"
-                    value={searchTerm}
-                    onChange={handleSearch}
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-purple-500/20 rounded-xl focus:outline-none focus:border-purple-500/40 text-white placeholder-gray-400 transition-colors"
                   />
-                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
                 </div>
-                <button className="px-6 py-2 bg-black/50 border border-[#9333EA]/20 rounded-lg text-white hover:bg-[#9333EA]/10 focus:outline-none focus:ring-2 focus:ring-[#9333EA] transition-colors duration-200">
-                  <Filter className="inline-block w-5 h-5 mr-2" />
-                  Filter
+                <button className="px-6 py-3 bg-white/5 border border-purple-500/20 rounded-xl text-white hover:bg-white/10 transition-colors flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  Filters
                 </button>
-              </div>
+              </motion.div>
+            </div>
 
-              {/* Featured Developers Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {displayedDevelopers.map((dev, index) => (
-                  <motion.div
-                    key={dev.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-black/50 border border-[#9333EA]/20 rounded-lg p-6 hover:border-[#9333EA]/40 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-16 h-16 rounded-full bg-purple-600/20 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-purple-400">
-                            {dev.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold text-white">{dev.name}</h3>
-                          <p className="text-gray-400">{dev.role}</p>
-                        </div>
+            {/* Developer Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {currentDevelopers.map((developer, index) => (
+                <motion.div
+                  key={developer.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="group relative bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden hover:bg-white/10 transition-colors border border-purple-500/10"
+                >
+                  <div className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-16 h-16 rounded-full bg-purple-500/20 overflow-hidden">
+                        {/* Avatar placeholder */}
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500/30 to-purple-700/30" />
                       </div>
-                      <button 
-                        type="button" 
-                        className="text-purple-400 hover:text-purple-300"
-                        aria-label="Favorite developer"
-                      >
-                        <Star className="w-5 h-5" />
-                      </button>
+                      <div>
+                        <h3 className="text-xl font-semibold text-white/90">{developer.name}</h3>
+                        <p className="text-gray-300/80">{developer.role}</p>
+                      </div>
                     </div>
-
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {dev.skills.map((skill) => (
+                      {developer.skills.map((skill, skillIndex) => (
                         <span
-                          key={skill}
-                          className="text-xs px-3 py-1 rounded-full bg-purple-500/10 text-purple-400"
+                          key={skillIndex}
+                          className="px-3 py-1 text-sm bg-purple-500/10 text-purple-300/90 rounded-full border border-purple-500/20"
                         >
                           {skill}
                         </span>
                       ))}
                     </div>
-
-                    <div className="flex items-center mt-4 space-x-4">
-                      <button className="flex items-center space-x-1 text-gray-400 hover:text-purple-400 transition-colors">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2 text-gray-300/80">
                         <ThumbsUp className="w-4 h-4" />
-                        <span>{dev.likes}</span>
-                      </button>
-                      <button className="flex items-center space-x-1 text-gray-400 hover:text-purple-400 transition-colors">
-                        <Star className="w-4 h-4" />
-                        <span>Save</span>
-                      </button>
+                        <span>{developer.likes}</span>
+                      </div>
+                      <Link
+                        href={`/portfolio/${developer.id}`}
+                        className="px-4 py-2 bg-purple-500/10 text-purple-300/90 rounded-full hover:bg-purple-500/20 transition-colors text-sm border border-purple-500/20"
+                      >
+                        View Portfolio
+                      </Link>
                     </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
 
-                    <Link
-                      href={`/profile/${dev.id}`}
-                      className="mt-4 inline-block px-6 py-2 w-full text-center bg-black border-2 border-[#9333EA] rounded-full text-white hover:bg-[#9333EA]/10 focus:outline-none focus:ring-2 focus:ring-[#9333EA] transition-colors duration-200"
-                    >
-                      View Profile
-                    </Link>
-                  </motion.div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-12">
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index + 1)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${
+                      currentPage === index + 1
+                        ? 'bg-purple-500/20 border-purple-500/40 text-white'
+                        : 'border-purple-500/20 text-gray-400 hover:bg-purple-500/10'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
                 ))}
               </div>
-
-              {/* Load More Button */}
-              {hasMore && (
-                <div className="text-center mt-12">
-                  {isLoading ? (
-                    <button
-                      disabled
-                      className="mt-8 px-6 py-2 bg-black border-2 border-[#9333EA]/50 rounded-full text-white opacity-50 cursor-not-allowed"
-                    >
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={loadMore}
-                      className="mt-8 px-6 py-2 bg-black border-2 border-[#9333EA] rounded-full text-white hover:bg-[#9333EA]/10 focus:outline-none focus:ring-2 focus:ring-[#9333EA] transition-colors duration-200"
-                    >
-                      Load More
-                    </button>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          </div>
+            )}
+          </section>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

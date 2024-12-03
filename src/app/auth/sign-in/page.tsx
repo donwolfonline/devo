@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { SpaceBackground } from '@/components/SpaceBackground';
+import { MouseFollower, FloatingDots } from '@/components/BackgroundElements';
+import { Loader2 } from 'lucide-react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function SignInContent() {
@@ -42,104 +44,98 @@ function SignInContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a1a] via-[#1a1a2a] to-[#2a2a3a] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-gray-900/50 border border-gray-800 rounded-xl p-8 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <h2 className="text-3xl font-bold text-white">Welcome back</h2>
-          <p className="mt-2 text-gray-400">
-            Sign in to continue to your portfolio
-          </p>
-        </motion.div>
+    <div className="min-h-screen relative bg-gradient-to-b from-black via-purple-950/5 to-black">
+      <SpaceBackground />
+      <main className="flex min-h-screen flex-col relative overflow-hidden">
+        <MouseFollower />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <FloatingDots />
+        </div>
 
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          {error && (
-            <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-lg">
-              {error}
+        {/* Background gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-950/20 via-black to-purple-950/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-purple-900/10 via-transparent to-transparent pointer-events-none mix-blend-screen" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-purple-800/5 via-transparent to-transparent pointer-events-none mix-blend-screen" />
+
+        {/* Center content */}
+        <div className="flex-1 flex items-center justify-center w-full p-4">
+          <div className="w-full max-w-md">
+            <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+              <h2 className="text-3xl font-bold mb-6 bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
+                Welcome back
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-lg">
+                    {error}
+                  </div>
+                )}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300/90 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 rounded-lg bg-white/5 border border-purple-500/20 text-white placeholder-gray-400
+                             focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-transparent
+                             transition-colors"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-300/90 mb-2">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full px-4 py-2 rounded-lg bg-white/5 border border-purple-500/20 text-white placeholder-gray-400
+                             focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-transparent
+                             transition-colors"
+                    placeholder="Enter your password"
+                  />
+                  <div className="mt-2 flex justify-end">
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                </div>
+                <div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-purple-900/90 to-purple-800/90 text-white font-medium
+                             hover:from-purple-800/90 hover:to-purple-700/90 transition-all duration-200
+                             focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-black"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      'Sign In'
+                    )}
+                  </button>
+                </div>
+                <div className="mt-6 text-center text-sm text-gray-300/80">
+                  Don't have an account?{' '}
+                  <Link href="/auth/sign-up" className="text-purple-400 hover:text-purple-300 transition-colors">
+                    Sign up
+                  </Link>
+                </div>
+              </form>
             </div>
-          )}
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="mt-1 block w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg 
-                       text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 
-                       focus:ring-1 focus:ring-purple-500 transition-colors"
-              placeholder="Enter your email"
-            />
           </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="mt-1 block w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg 
-                       text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 
-                       focus:ring-1 focus:ring-purple-500 transition-colors"
-              placeholder="Enter your password"
-            />
-            <div className="mt-2 flex justify-end">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent 
-                       text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-950 via-purple-800 to-purple-950
-                       hover:from-purple-900 hover:via-purple-700 hover:to-purple-900
-                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500
-                       transition-all duration-200 transform hover:scale-[1.02]
-                       shadow-[0_0_20px_rgba(88,28,135,0.5)] hover:shadow-[0_0_30px_rgba(147,51,234,0.7)]"
-            >
-              {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </div>
-
-          <div className="text-center text-sm">
-            <span className="text-gray-400">Don't have an account? </span>
-            <Link
-              href="/auth/sign-up"
-              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-            >
-              Sign up
-            </Link>
-          </div>
-        </motion.form>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
