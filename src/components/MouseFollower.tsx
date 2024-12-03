@@ -39,3 +39,5 @@ export const MouseFollower = () => {
     </AnimatePresence>
   );
 };
+
+export default MouseFollower;

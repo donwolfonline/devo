@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-export function FloatingDots() {
+export const FloatingDots = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dotsRef = useRef<HTMLDivElement[]>([]);
 
@@ -70,4 +70,4 @@ export function FloatingDots() {
       transition={{ duration: 1 }}
     />
   );
-}
+};

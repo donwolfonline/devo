@@ -18,17 +18,9 @@ export default function SuperAdminDashboard() {
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      redirect('/login');
+      redirect('/auth/sign-in?callbackUrl=/superadmin/dashboard');
     }
   });
-
-  if (status === 'loading') {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#0a0a0f]">
-        <div className="w-8 h-8 border-t-2 border-b-2 border-purple-500 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   const [stats, setStats] = useState({
     totalUsers: '...',
@@ -38,10 +30,19 @@ export default function SuperAdminDashboard() {
   });
 
   useEffect(() => {
-    if (status === 'authenticated' && session.user.role !== 'SUPER_ADMIN') {
-      redirect('/superadmin');
+    // Check if user is authenticated but not a super admin
+    if (status === 'authenticated' && (!session?.user?.role || session.user.role !== 'SUPER_ADMIN')) {
+      redirect('/');
     }
   }, [session, status]);
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0a0a0f]">
+        <div className="w-8 h-8 border-t-2 border-b-2 border-purple-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     // Simulated stats loading

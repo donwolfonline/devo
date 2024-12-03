@@ -1,11 +1,8 @@
 {
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/register/route": "app/register/route.js",
-  "/page": "app/page.js",
-  "/link-in-bio/page": "app/link-in-bio/page.js",
-  "/templates/page": "app/templates/page.js",
   "/auth/sign-in/page": "app/auth/sign-in/page.js",
-  "/auth/sign-up/page": "app/auth/sign-up/page.js",
-  "/register/page": "app/register/page.js",
-  "/explore/page": "app/explore/page.js"
+  "/page": "app/page.js",
+  "/explore/page": "app/explore/page.js",
+  "/superadmin/page": "app/superadmin/page.js",
+  "/superadmin/dashboard/page": "app/superadmin/dashboard/page.js"
 }

@@ -23,7 +23,7 @@ const generatePositions = (count: number) => {
   return positions;
 };
 
-export const MouseFollower = () => {
+const MouseFollower = () => {
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
   
@@ -57,7 +57,7 @@ export const MouseFollower = () => {
   );
 };
 
-export const FloatingDots = () => {
+const FloatingDots = () => {
   return (
     <div className="absolute inset-0 overflow-hidden">
       <div className="floating-dots-container">
@@ -119,3 +119,5 @@ export const FloatingDots = () => {
     </div>
   );
 };
+
+export { MouseFollower, FloatingDots };
