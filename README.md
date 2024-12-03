@@ -1,6 +1,11 @@
 # DevoApp - Developer Portfolio Platform
 
-![DevoApp Landing Page](/public/screenshots/landing-page.png)
+## 📸 Screenshots
+
+### Landing Page
+
+<img width="1279" alt="Screenshot 2024-12-03 at 11 08 38 AM" src="https://github.com/user-attachments/assets/cfb01b95-f47d-4ae9-bb1e-e5733d3e2fad">
+
 
 A modern, sleek developer portfolio platform built with Next.js and Tailwind CSS. Create stunning portfolios, showcase your projects, and connect with other developers.
 
@@ -61,10 +66,6 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## 📸 Screenshots
-
-### Landing Page
-![Landing Page](./public/screenshots/landing-page.png)
 
 ## 🎨 Design System
 
@@ -98,4 +99,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-Don Wolf - [GitHub Profile](https://github.com/donwolfonline)
+Frederick Dineen - [GitHub Profile](https://github.com/donwolfonline)
