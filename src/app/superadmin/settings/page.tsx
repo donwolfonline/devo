@@ -1,179 +1,293 @@
 'use client';
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
-export default function AdminSettings() {
-  const [siteSettings, setSiteSettings] = useState({
-    siteName: 'DevoApp',
-    siteDescription: 'Developer Portfolio Platform',
-    maintenanceMode: false,
-    requireEmailVerification: true,
-    allowUserRegistration: true,
+interface SystemSettings {
+  email: {
+    smtpServer: string;
+    smtpPort: string;
+    smtpEncryption: string;
+    senderEmail: string;
+    senderName: string;
+    smtpUsername: string;
+    smtpPassword: string;
+    emailAuthentication: boolean;
+  };
+  data: {
+    dataRetention: string;
+    automatedBackups: boolean;
+    backupFrequency: string;
+    storageLocation: string;
+    dataEncryption: boolean;
+    backupRetention: string;
+  };
+  notifications: {
+    emailNotifications: boolean;
+    securityAlerts: boolean;
+    maintenanceUpdates: boolean;
+    systemNotifications: boolean;
+    userActivityAlerts: boolean;
+    performanceAlerts: boolean;
+  };
+  security: {
+    passwordLength: string;
+    sessionTimeout: string;
+    twoFactorAuth: boolean;
+  };
+}
+
+export default function SettingsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [settings, setSettings] = useState<SystemSettings>({
+    email: {
+      smtpServer: '',
+      smtpPort: '',
+      smtpEncryption: '',
+      senderEmail: '',
+      senderName: '',
+      smtpUsername: '',
+      smtpPassword: '',
+      emailAuthentication: true,
+    },
+    data: {
+      dataRetention: '30',
+      automatedBackups: true,
+      backupFrequency: 'daily',
+      storageLocation: 'local',
+      dataEncryption: true,
+      backupRetention: '5',
+    },
+    notifications: {
+      emailNotifications: true,
+      securityAlerts: true,
+      maintenanceUpdates: false,
+      systemNotifications: true,
+      userActivityAlerts: true,
+      performanceAlerts: false,
+    },
+    security: {
+      passwordLength: '8',
+      sessionTimeout: '30',
+      twoFactorAuth: false,
+    },
   });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('email');
 
-  const [emailSettings, setEmailSettings] = useState({
-    smtpHost: '',
-    smtpPort: '',
-    smtpUser: '',
-    smtpPassword: '',
-    fromEmail: '',
-  });
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    } else if (session?.user?.role !== 'SUPER_ADMIN') {
+      router.push('/');
+    } else {
+      fetchSettings();
+    }
+  }, [status, session]);
 
-  const handleSiteSettingsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement site settings update
-    console.log('Updating site settings:', siteSettings);
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      const data = await response.json();
+      setSettings(data);
+    } catch (error) {
+      toast.error('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEmailSettingsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement email settings update
-    console.log('Updating email settings:', emailSettings);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      if (!response.ok) throw new Error('Failed to save settings');
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      toast.error('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleTestEmail = async () => {
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings.email),
+      });
+      if (!response.ok) throw new Error('Failed to test email configuration');
+      toast.success('Email test successful');
+    } catch (error) {
+      toast.error('Email test failed');
+    }
+  };
+
+  const updateSettings = (section: keyof SystemSettings, field: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value,
+      },
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Site Settings</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">System Settings</h1>
 
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="email">Email</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {['email', 'data', 'notifications', 'security'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`${
+                  activeTab === tab
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm capitalize`}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
 
-        <TabsContent value="general">
-          <Card className="p-6">
-            <form onSubmit={handleSiteSettingsSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="siteName">Site Name</Label>
-                <Input
-                  id="siteName"
-                  value={siteSettings.siteName}
-                  onChange={(e) =>
-                    setSiteSettings({ ...siteSettings, siteName: e.target.value })
-                  }
+      <div className="bg-white shadow rounded-lg p-6">
+        {activeTab === 'email' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">SMTP Server</label>
+                <input
+                  type="text"
+                  value={settings.email.smtpServer}
+                  onChange={(e) => updateSettings('email', 'smtpServer', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="siteDescription">Site Description</Label>
-                <Input
-                  id="siteDescription"
-                  value={siteSettings.siteDescription}
-                  onChange={(e) =>
-                    setSiteSettings({ ...siteSettings, siteDescription: e.target.value })
-                  }
+              <div>
+                <label className="block text-sm font-medium text-gray-700">SMTP Port</label>
+                <input
+                  type="text"
+                  value={settings.email.smtpPort}
+                  onChange={(e) => updateSettings('email', 'smtpPort', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
               </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="maintenanceMode"
-                  checked={siteSettings.maintenanceMode}
-                  onCheckedChange={(checked) =>
-                    setSiteSettings({ ...siteSettings, maintenanceMode: checked })
-                  }
-                />
-                <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
-              </div>
-
-              <Button type="submit">Save Changes</Button>
-            </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="email">
-          <Card className="p-6">
-            <form onSubmit={handleEmailSettingsSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="smtpHost">SMTP Host</Label>
-                <Input
-                  id="smtpHost"
-                  value={emailSettings.smtpHost}
-                  onChange={(e) =>
-                    setEmailSettings({ ...emailSettings, smtpHost: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="smtpPort">SMTP Port</Label>
-                <Input
-                  id="smtpPort"
-                  value={emailSettings.smtpPort}
-                  onChange={(e) =>
-                    setEmailSettings({ ...emailSettings, smtpPort: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="smtpUser">SMTP Username</Label>
-                <Input
-                  id="smtpUser"
-                  value={emailSettings.smtpUser}
-                  onChange={(e) =>
-                    setEmailSettings({ ...emailSettings, smtpUser: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="smtpPassword">SMTP Password</Label>
-                <Input
-                  id="smtpPassword"
-                  type="password"
-                  value={emailSettings.smtpPassword}
-                  onChange={(e) =>
-                    setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })
-                  }
-                />
-              </div>
-
-              <Button type="submit">Save Email Settings</Button>
-            </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <Card className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="requireEmailVerification"
-                  checked={siteSettings.requireEmailVerification}
-                  onCheckedChange={(checked) =>
-                    setSiteSettings({ ...siteSettings, requireEmailVerification: checked })
-                  }
-                />
-                <Label htmlFor="requireEmailVerification">
-                  Require Email Verification
-                </Label>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="allowUserRegistration"
-                  checked={siteSettings.allowUserRegistration}
-                  onCheckedChange={(checked) =>
-                    setSiteSettings({ ...siteSettings, allowUserRegistration: checked })
-                  }
-                />
-                <Label htmlFor="allowUserRegistration">Allow User Registration</Label>
-              </div>
-
-              <Button onClick={() => console.log('Clear cache')}>Clear Site Cache</Button>
             </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <button
+              onClick={handleTestEmail}
+              className="ml-4 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Test Email Configuration
+            </button>
+          </div>
+        )}
+
+        {activeTab === 'data' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Data Retention (days)</label>
+                <input
+                  type="number"
+                  value={settings.data.dataRetention}
+                  onChange={(e) => updateSettings('data', 'dataRetention', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Backup Frequency</label>
+                <select
+                  value={settings.data.backupFrequency}
+                  onChange={(e) => updateSettings('data', 'backupFrequency', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            {Object.entries(settings.notifications).map(([key, value]) => (
+              <div key={key} className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(e) => updateSettings('notifications', key, e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900 capitalize">
+                  {key.replace(/([A-Z])/g, ' $1').trim()}
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Minimum Password Length</label>
+                <input
+                  type="number"
+                  value={settings.security.passwordLength}
+                  onChange={(e) => updateSettings('security', 'passwordLength', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Session Timeout (minutes)</label>
+                <input
+                  type="number"
+                  value={settings.security.sessionTimeout}
+                  onChange={(e) => updateSettings('security', 'sessionTimeout', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
