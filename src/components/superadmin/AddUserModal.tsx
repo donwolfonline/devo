@@ -8,6 +8,7 @@ interface AddUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
+    username: string;
     email: string;
     name: string;
     role: string;
@@ -18,6 +19,7 @@ interface AddUserModalProps {
 
 export default function AddUserModal({ isOpen, onClose, onSubmit, error: externalError }: AddUserModalProps) {
   const [formData, setFormData] = useState({
+    username: '',
     email: '',
     name: '',
     role: 'USER',
@@ -30,6 +32,13 @@ export default function AddUserModal({ isOpen, onClose, onSubmit, error: externa
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validate required fields
+    if (!formData.username || !formData.email || !formData.password) {
+      setError('Username, email, and password are required');
+      setLoading(false);
+      return;
+    }
 
     // Client-side password validation
     const { password } = formData;
@@ -54,6 +63,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit, error: externa
       await onSubmit(formData);
       onClose();
       setFormData({
+        username: '',
         email: '',
         name: '',
         role: 'USER',
@@ -90,16 +100,32 @@ export default function AddUserModal({ isOpen, onClose, onSubmit, error: externa
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              required
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              className="w-full bg-[#1f1f2d] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter username"
+            />
+          </div>
+
+          <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
               Full Name
             </label>
             <input
               type="text"
               id="name"
+              required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full bg-[#1f1f2d] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
+              placeholder="Enter full name"
             />
           </div>
 
@@ -110,10 +136,11 @@ export default function AddUserModal({ isOpen, onClose, onSubmit, error: externa
             <input
               type="email"
               id="email"
+              required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full bg-[#1f1f2d] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-              required
+              placeholder="Enter email address"
             />
           </div>
 
@@ -137,21 +164,18 @@ export default function AddUserModal({ isOpen, onClose, onSubmit, error: externa
             <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
               Password
             </label>
-            <div className="relative">
-              <input
-                type="password"
-                id="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-[#1f1f2d] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                required
-                minLength={8}
-                placeholder="Enter password"
-              />
-            </div>
-            <div className="mt-1 text-xs">
-              <p className="text-gray-500">Password requirements:</p>
-              <ul className="list-disc list-inside text-gray-500">
+            <input
+              type="password"
+              id="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full bg-[#1f1f2d] border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter password"
+            />
+            <div className="mt-2 text-xs text-gray-400">
+              <p>Password requirements:</p>
+              <ul className="list-disc list-inside">
                 <li>At least 8 characters long</li>
                 <li>One uppercase letter (A-Z)</li>
                 <li>One lowercase letter (a-z)</li>
@@ -161,20 +185,22 @@ export default function AddUserModal({ isOpen, onClose, onSubmit, error: externa
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
               disabled={loading}
+              className={`px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              {loading ? 'Adding User...' : 'Add User'}
+              {loading ? 'Adding...' : 'Add User'}
             </button>
           </div>
         </form>

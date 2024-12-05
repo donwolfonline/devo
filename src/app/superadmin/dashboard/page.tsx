@@ -9,10 +9,16 @@ import {
   ChartBarIcon, 
   ShieldCheckIcon,
   ServerIcon,
-  BellAlertIcon
+  BellAlertIcon,
+  ArrowPathIcon,
+  DocumentTextIcon,
+  MegaphoneIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import AddUserModal from '@/components/superadmin/AddUserModal';
+import BackupModal from '@/components/modals/BackupModal';
+import AnnouncementModal from '@/components/modals/AnnouncementModal';
 
 export default function SuperAdminDashboard() {
   const { data: session, status } = useSession({
@@ -29,41 +35,55 @@ export default function SuperAdminDashboard() {
     systemHealth: '...'
   });
 
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
   useEffect(() => {
-    // Check if user is authenticated but not a super admin
-    if (status === 'authenticated' && (!session?.user?.role || session.user.role !== 'SUPER_ADMIN')) {
-      redirect('/');
+    if (actionSuccess) {
+      const timer = setTimeout(() => setActionSuccess(null), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [session, status]);
+  }, [actionSuccess]);
 
-  if (status === 'loading') {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#0a0a0f]">
-        <div className="w-8 h-8 border-t-2 border-b-2 border-purple-500 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
+  // Load dashboard stats
   useEffect(() => {
-    // Simulated stats loading
     const loadStats = async () => {
-      // In a real app, this would be an API call
-      setTimeout(() => {
+      try {
+        const [analyticsResponse, usersResponse] = await Promise.allSettled([
+          fetch('/api/superadmin/analytics?timeRange=24h'),
+          fetch('/api/users/stats')
+        ]);
+
+        let analyticsData = null;
+        let usersData = null;
+
+        if (analyticsResponse.status === 'fulfilled' && analyticsResponse.value.ok) {
+          analyticsData = await analyticsResponse.value.json();
+        }
+
+        if (usersResponse.status === 'fulfilled' && usersResponse.value.ok) {
+          usersData = await usersResponse.value.json();
+        }
+
         setStats({
-          totalUsers: '1,234',
-          activeUsers: '892',
-          totalProjects: '156',
-          systemHealth: '98%'
+          totalUsers: usersData?.totalUsers?.toLocaleString() || '...',
+          activeUsers: analyticsData?.activeSessions?.toLocaleString() || usersData?.activeUsers?.toLocaleString() || '...',
+          totalProjects: usersData?.totalProjects?.toLocaleString() || '...',
+          systemHealth: `${analyticsData?.systemHealth || 98}%`
         });
-      }, 1000);
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+      }
     };
     loadStats();
   }, []);
 
-  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const handleAddUser = async (userData: {
+    username: string;
     email: string;
     name: string;
     role: string;
@@ -85,14 +105,158 @@ export default function SuperAdminDashboard() {
         throw new Error(data.error || 'Failed to create user');
       }
 
-      // Close the modal and optionally refresh the user list
       setIsAddUserModalOpen(false);
-      // You might want to refresh your user stats here
+      setActionSuccess('User created successfully');
     } catch (error) {
       console.error('Error creating user:', error);
       setError(error instanceof Error ? error.message : 'Failed to create user');
     }
   };
+
+  const handleClearCache = async () => {
+    try {
+      setActionLoading('cache');
+      setError(null);
+      
+      const response = await fetch('/api/system/cache', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear cache');
+      }
+
+      setActionSuccess('Cache cleared successfully');
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+      setError(error instanceof Error ? error.message : 'Failed to clear cache');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSecurityScan = async () => {
+    try {
+      setActionLoading('security');
+      setError(null);
+      
+      const response = await fetch('/api/system/security/scan', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initiate security scan');
+      }
+
+      setActionSuccess('Security scan initiated');
+    } catch (error) {
+      console.error('Error initiating security scan:', error);
+      setError(error instanceof Error ? error.message : 'Failed to initiate security scan');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      setActionLoading('report');
+      setError(null);
+      
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      // Trigger download if report was generated successfully
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'system-report.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      setActionSuccess('Report generated successfully');
+    } catch (error) {
+      console.error('Error generating report:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate report');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    try {
+      setActionLoading('updates');
+      setError(null);
+      
+      const response = await fetch('/api/system/updates/check', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to check for updates');
+      }
+
+      const data = await response.json();
+      setActionSuccess(data.updates ? 'Updates available!' : 'System is up to date');
+    } catch (error) {
+      console.error('Error checking updates:', error);
+      setError(error instanceof Error ? error.message : 'Failed to check for updates');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const quickActions = [
+    {
+      name: 'Add User',
+      icon: UserGroupIcon,
+      onClick: () => setIsAddUserModalOpen(true),
+      loading: false,
+    },
+    {
+      name: 'System Backup',
+      icon: CloudArrowUpIcon,
+      onClick: () => setIsBackupModalOpen(true),
+      loading: false,
+    },
+    {
+      name: 'Clear Cache',
+      icon: ArrowPathIcon,
+      onClick: handleClearCache,
+      loading: actionLoading === 'cache',
+    },
+    {
+      name: 'Security Scan',
+      icon: ShieldCheckIcon,
+      onClick: handleSecurityScan,
+      loading: actionLoading === 'security',
+    },
+    {
+      name: 'Generate Report',
+      icon: DocumentTextIcon,
+      onClick: handleGenerateReport,
+      loading: actionLoading === 'report',
+    },
+    {
+      name: 'Send Announcement',
+      icon: MegaphoneIcon,
+      onClick: () => setIsAnnouncementModalOpen(true),
+      loading: false,
+    },
+  ];
+
+  const recentAlerts = [
+    { id: 1, message: 'New user registration spike detected', time: '2 minutes ago', type: 'info' },
+    { id: 2, message: 'System backup completed successfully', time: '1 hour ago', type: 'success' },
+    { id: 3, message: 'Server load approaching threshold', time: '3 hours ago', type: 'warning' }
+  ];
 
   const cards = [
     {
@@ -129,18 +293,24 @@ export default function SuperAdminDashboard() {
     }
   ];
 
-  const recentAlerts = [
-    { id: 1, message: 'New user registration spike detected', time: '2 minutes ago', type: 'info' },
-    { id: 2, message: 'System backup completed successfully', time: '1 hour ago', type: 'success' },
-    { id: 3, message: 'Server load approaching threshold', time: '3 hours ago', type: 'warning' }
-  ];
-
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-col space-y-1">
         <h1 className="text-2xl md:text-3xl font-semibold text-purple-400 leading-tight">Dashboard Overview</h1>
         <p className="text-gray-400 text-sm md:text-base">Welcome back to your admin dashboard</p>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+          {error}
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
+          {actionSuccess}
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -191,25 +361,40 @@ export default function SuperAdminDashboard() {
             <Cog6ToothIcon className="h-5 w-5 text-purple-500 flex-shrink-0" />
             Quick Actions
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button 
-              onClick={() => setIsAddUserModalOpen(true)}
-              className="p-3 md:p-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors text-sm md:text-base"
-            >
-              Add New User
-            </button>
-            <button className="p-3 md:p-4 rounded-lg bg-[#1f1f2d] hover:bg-[#25252f] text-white font-medium border border-gray-800 transition-colors text-sm md:text-base">
-              System Backup
-            </button>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {quickActions.map((action) => (
+              <button
+                key={action.name}
+                onClick={action.onClick}
+                disabled={action.loading}
+                className="p-3 md:p-4 rounded-lg bg-[#1f1f2d] hover:bg-[#25252f] text-white font-medium border border-gray-800 transition-colors text-sm md:text-base flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {action.loading ? (
+                  <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <action.icon className="w-5 h-5 text-purple-400" />
+                )}
+                {action.name}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
+      {/* Modals */}
       <AddUserModal 
         isOpen={isAddUserModalOpen} 
         onClose={() => setIsAddUserModalOpen(false)}
         onSubmit={handleAddUser}
         error={error}
+      />
+      <BackupModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
+      />
+      <AnnouncementModal
+        isOpen={isAnnouncementModalOpen}
+        onClose={() => setIsAnnouncementModalOpen(false)}
       />
     </div>
   );

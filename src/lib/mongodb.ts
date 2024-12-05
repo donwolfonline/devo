@@ -1,63 +1,54 @@
 import mongoose from 'mongoose';
-import { initializeModels } from '@/models/init';
 
-// Only run on server side
-const isServer = typeof window === 'undefined';
-
-if (!isServer) {
-  throw new Error('MongoDB connection can only be established on the server side');
+if (!process.env.MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
 }
 
-// Ensure we have a valid MONGODB_URI
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/devoapp';
+const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error('Please define MONGODB_URI in your environment variables');
-}
+const options: mongoose.ConnectOptions = {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+};
 
 declare global {
-  var mongoose: {
-    conn: mongoose.Connection | null;
-    promise: Promise<typeof mongoose> | null;
-  };
+  var mongoose: { conn: null | typeof mongoose; promise: null | Promise<typeof mongoose> };
 }
 
-let cached = global.mongoose || { conn: null, promise: null };
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
 export async function connectDB() {
-  if (!isServer) {
-    throw new Error('Cannot connect to MongoDB from the client side');
-  }
-
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
     const opts = {
+      ...options,
       bufferCommands: false,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      initializeModels();
       return mongoose;
     });
   }
 
   try {
-    cached.conn = (await cached.promise).connection;
-    return cached.conn;
-  } catch (error) {
+    cached.conn = await cached.promise;
+  } catch (e) {
     cached.promise = null;
-    throw error;
+    throw e;
   }
+
+  return cached.conn;
 }
 
 export async function disconnect() {
-  if (!isServer) return;
-  
   if (cached.conn) {
     await mongoose.disconnect();
     cached.conn = null;
@@ -65,14 +56,9 @@ export async function disconnect() {
   }
 }
 
-// Debug mode only on server side
-if (process.env.NODE_ENV === 'development' && isServer) {
-  mongoose.set('debug', true);
-}
-
-export function getConnection() {
-  if (!isServer) {
-    throw new Error('Cannot get MongoDB connection from client side');
-  }
-  return cached.conn;
+// Edge runtime doesn't support process events, so we'll handle cleanup differently
+if (typeof process !== 'undefined' && process.on) {
+  ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
+    process.on(signal, () => disconnect());
+  });
 }

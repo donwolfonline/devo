@@ -1,74 +1,74 @@
-import NextAuth from "next-auth/next";
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { connectDB } from "@/lib/mongodb";
-import User from "@/models/User";
+import NextAuth, { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { connectDB } from '@/lib/mongodb';
+import User from '@/models/User';
+import bcrypt from 'bcryptjs';
 
 export const authOptions: NextAuthOptions = {
-  debug: true,
   providers: [
     CredentialsProvider({
-      id: 'credentials',
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
-        type: { label: "Login Type", type: "text" }
+        type: { label: "Type", type: "text" }
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) {
+          console.log('Missing credentials');
+          throw new Error('Please enter username and password');
+        }
+
         try {
-          console.log('Auth attempt:', {
-            username: credentials?.username,
-            type: credentials?.type,
-            hasPassword: !!credentials?.password
-          });
-
-          if (!credentials?.username || !credentials?.password) {
-            console.log('Missing credentials');
-            throw new Error('Please enter your username and password');
-          }
-
+          console.log('Connecting to DB...');
           await connectDB();
-          console.log('Connected to DB');
+          
+          const username = credentials.username.toLowerCase();
+          const isSuperAdmin = credentials.type === 'superadmin';
+          
+          console.log('Finding user:', { username, type: credentials.type });
 
-          // First find the user without filtering by role
-          const user = await User.findOne({
-            username: credentials.username.toLowerCase()
+          // Find user with password field
+          const user = await User.findOne({ 
+            username,
+            role: isSuperAdmin ? 'SUPER_ADMIN' : { $ne: 'SUPER_ADMIN' }
           }).select('+password');
-
-          console.log('User found:', {
-            exists: !!user,
-            role: user?.role,
-            requestedType: credentials.type
-          });
 
           if (!user) {
             console.log('User not found');
-            throw new Error('Invalid credentials');
+            throw new Error('Invalid username or password');
           }
 
-          // For testing: use direct password comparison
-          const isValidPassword = credentials.password === 'password123';
-          console.log('Password valid:', isValidPassword);
+          console.log('User found:', {
+            id: user._id,
+            username: user.username,
+            role: user.role,
+            hasPasswordField: !!user.password,
+            passwordStartsWithBcrypt: user.password?.startsWith('$2')
+          });
 
-          if (!isValidPassword) {
+          // Compare passwords using bcrypt directly
+          console.log('Comparing passwords...');
+          const isValid = await bcrypt.compare(credentials.password, user.password);
+          
+          console.log('Password comparison:', {
+            isValid,
+            passwordStartsWithBcrypt: user.password.startsWith('$2')
+          });
+
+          if (!isValid) {
             console.log('Invalid password');
-            throw new Error('Invalid credentials');
+            throw new Error('Invalid username or password');
           }
 
-          // Then check role if trying to access superadmin
-          if (credentials.type === 'superadmin' && user.role !== 'SUPER_ADMIN') {
-            console.log('Not a superadmin');
-            throw new Error('Invalid credentials');
-          }
-
-          console.log('Login successful');
+          console.log('Authentication successful');
           return {
             id: user._id.toString(),
+            name: user.name || '',
             email: user.email,
-            name: user.name,
+            username: user.username,
             role: user.role,
-            username: user.username
+            isActive: true // Always return true for isActive
           };
         } catch (error) {
           console.error('Auth error:', error);
@@ -79,28 +79,49 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      console.log('JWT Callback:', { token, user });
       if (user) {
-        token.role = user.role;
         token.id = user.id;
+        token.role = user.role;
         token.username = user.username;
+        token.isActive = true; // Always set isActive to true in token
       }
       return token;
     },
     async session({ session, token }) {
-      console.log('Session Callback:', { session, token });
-      if (token) {
-        session.user.role = token.role as string;
+      if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = token.role as string;
         session.user.username = token.username as string;
+        session.user.isActive = true; // Always set isActive to true in session
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle superadmin routes
+      if (url.startsWith('/superadmin')) {
+        return url;
+      }
+
+      // Handle relative URLs
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+
+      // Default to base URL
+      return baseUrl;
     }
   },
+  pages: {
+    signIn: '/auth/sign-in',
+    error: '/auth/error'
+  },
   session: {
-    strategy: 'jwt'
-  }
-}
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60 // 24 hours
+  },
+  debug: true,
+  secret: process.env.NEXTAUTH_SECRET
+};
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

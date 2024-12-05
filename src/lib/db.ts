@@ -1,6 +1,14 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/devoshowcase';
+// Extend the global type to include mongoose
+declare global {
+  var mongoose: {
+    conn: mongoose.Connection | null;
+    promise: Promise<typeof mongoose> | null;
+  } | undefined;
+}
+
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/devoapp';
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -8,56 +16,55 @@ if (!MONGODB_URI) {
   );
 }
 
-// Declare a type for the global mongoose cache
-declare global {
-  var mongoose: {
-    conn: mongoose.Connection | null;
-    promise: Promise<typeof mongoose> | null;
-  };
+let cached = globalThis.mongoose;
+
+if (!cached) {
+  cached = globalThis.mongoose = { conn: null, promise: null };
 }
 
-// Create a cached connection
-let cached = global.mongoose || { conn: null, promise: null };
-
 async function dbConnect() {
-  // If we have a cached connection, return it
   if (cached.conn) {
-    return cached.conn;
+    return {
+      conn: cached.conn,
+      db: cached.conn.connection.db
+    };
   }
 
-  // If no existing promise, create a new connection
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
     };
 
-    // Attempt to connect
-    cached.promise = mongoose.connect(MONGODB_URI, opts)
-      .then((mongoose) => {
-        console.log('MongoDB connected successfully');
-        return mongoose;
-      })
-      .catch((error) => {
-        console.error('MongoDB connection error:', error);
-        throw error;
-      });
+    cached.promise = mongoose.connect(MONGODB_URI, opts);
   }
 
   try {
-    // Wait for the connection promise
-    cached.conn = await cached.promise;
+    const mongoose = await cached.promise;
+    cached.conn = mongoose.connection;
+    
+    return {
+      conn: cached.conn,
+      db: cached.conn.db
+    };
   } catch (e) {
-    // Reset the promise if connection fails
     cached.promise = null;
     throw e;
   }
+}
 
-  // Update the global cache
-  global.mongoose = cached;
+export async function disconnect() {
+  if (cached.conn) {
+    await cached.conn.close();
+    cached.conn = null;
+    cached.promise = null;
+  }
+}
 
-  return cached.conn;
+// Edge runtime doesn't support process events, so we'll handle cleanup differently
+if (typeof process !== 'undefined' && process.on) {
+  ['SIGINT', 'SIGTERM', 'SIGQUIT'].forEach(signal => {
+    process.on(signal, () => disconnect());
+  });
 }
 
 export default dbConnect;

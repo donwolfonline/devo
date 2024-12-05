@@ -30,33 +30,17 @@ export const UserSchema = new Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [8, 'Password must be at least 8 characters long'],
-    validate: {
-      validator: (value: string) => {
-        return (
-          value.length >= 8 &&
-          /[A-Z]/.test(value) &&    // Has uppercase
-          /[a-z]/.test(value) &&    // Has lowercase
-          /[0-9]/.test(value) &&    // Has number
-          /[^A-Za-z0-9]/.test(value) // Has special character
-        );
-      },
-      message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-    },
+    select: false,
   },
   name: {
     type: String,
-    required: [true, 'Name is required'],
     trim: true,
-    minlength: [2, 'Name must be at least 2 characters long'],
-    maxlength: [50, 'Name cannot exceed 50 characters'],
+    default: '',
   },
   role: {
     type: String,
-    enum: {
-      values: ['USER', 'ADMIN', 'SUPER_ADMIN'],
-      message: '{VALUE} is not a valid role',
-    },
-    required: [true, 'Role is required'],
+    enum: ['USER', 'ADMIN', 'SUPER_ADMIN'],
+    default: 'USER',
   },
   isActive: {
     type: Boolean,
@@ -66,28 +50,43 @@ export const UserSchema = new Schema({
     type: Number,
     default: 0,
   },
+  lockUntil: {
+    type: Date,
+  },
   lastLogin: {
     type: Date,
-    default: null,
   },
   passwordChangedAt: {
     type: Date,
+  },
+  resetPasswordToken: {
+    type: String,
+    select: false,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    select: false,
+  },
+  createdAt: {
+    type: Date,
     default: Date.now,
   },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 }, {
   timestamps: true,
   toJSON: {
     transform: function(doc, ret) {
-      ret.id = ret._id.toString();
+      ret.id = ret._id;
       delete ret._id;
       delete ret.__v;
       delete ret.password;
       delete ret.resetPasswordToken;
       delete ret.resetPasswordExpires;
       return ret;
-    }
+    },
   }
 });
 
@@ -95,11 +94,10 @@ export const UserSchema = new Schema({
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ username: 1 }, { unique: true });
 
-// Pre-save middleware to hash password
+// Hash password before saving
 UserSchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) return next();
-
+  
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

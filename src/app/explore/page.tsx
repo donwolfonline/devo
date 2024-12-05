@@ -116,10 +116,10 @@ export default function ExplorePage() {
           <Navbar />
           
           {/* Hero Section */}
-          <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="text-center max-w-3xl mx-auto mb-12">
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12">
+            <div className="text-center max-w-4xl mx-auto mb-12">
               <motion.h1 
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-300 mb-6"
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-gray-100 via-purple-100 to-purple-400 drop-shadow-[0_0_25px_rgba(168,85,247,0.2)] [text-shadow:_0_1px_20px_rgb(168_85_247_/_20%)]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -127,7 +127,7 @@ export default function ExplorePage() {
                 Explore Developer Portfolios
               </motion.h1>
               <motion.p 
-                className="text-lg sm:text-xl text-gray-300/90 mb-8"
+                className="text-lg sm:text-xl text-gray-300 mb-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}

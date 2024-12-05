@@ -8,6 +8,7 @@ import AnimatedLogo from '@/components/shared/AnimatedLogo';
 import AnimatedIcon from '@/components/shared/AnimatedIcon';
 import SocialIcon from '@/components/shared/SocialIcon';
 import FooterIcon from '@/components/shared/FooterIcon';
+import SuperAdminToggle from '@/components/shared/SuperAdminToggle';
 import { MouseFollower, FloatingDots } from '@/components/BackgroundElements';
 import { SpaceBackground } from '@/components/SpaceBackground';
 
@@ -297,7 +298,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="w-full py-8 backdrop-blur-sm border-t border-purple-900/30 bg-black/40 z-20">
-          <div className="container mx-auto px-6">
+          <div className="container mx-auto px-6 relative">
             <div className="flex justify-center items-center space-x-8">
               <FooterIcon 
                 Icon={Github}
@@ -320,6 +321,7 @@ export default function Home() {
                 label="Email"
               />
             </div>
+            <SuperAdminToggle />
           </div>
         </footer>
       </main>

@@ -43,12 +43,13 @@ export default function TemplatesPage() {
         <div className="absolute inset-0 bg-gradient-to-tl from-purple-900/10 via-transparent to-transparent pointer-events-none mix-blend-screen" />
 
         {/* Content */}
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-300 mb-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <Navbar />
+          <div className="text-center pt-32 pb-16">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-gray-100 via-purple-100 to-purple-400 drop-shadow-[0_0_25px_rgba(168,85,247,0.2)] [text-shadow:_0_1px_20px_rgb(168_85_247_/_20%)]">
               Choose Your Template
             </h1>
-            <p className="text-lg sm:text-xl text-gray-300/90 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto">
               Select from our collection of professionally designed templates to create your perfect portfolio.
             </p>
           </div>

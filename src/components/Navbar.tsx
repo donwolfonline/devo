@@ -28,8 +28,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Hide navbar in super admin pages
-  if (pathname?.startsWith('/superadmin')) {
+  // Hide navbar in super admin dashboard pages
+  if (pathname?.startsWith('/superadmin/dashboard')) {
     return null;
   }
 

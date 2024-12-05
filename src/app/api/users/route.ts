@@ -1,186 +1,215 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth/[...nextauth]/route';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
+import bcrypt from 'bcryptjs';
+
+// Helper function to check admin authorization
+async function checkAdminAuth() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    throw new Error('Unauthorized');
+  }
+  if (session.user.role !== 'SUPER_ADMIN') {
+    throw new Error('Forbidden: Requires SUPER_ADMIN role');
+  }
+  return session;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token directly
-    const token = await getToken({ 
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET
-    });
-
-    if (!token || !token.role) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (token.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Connect to database
+    await checkAdminAuth();
     await connectDB();
 
-    // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
-    const search = searchParams.get('search') || '';
-    const role = searchParams.get('role');
-    const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search') || '';
+    const userId = searchParams.get('userId');
 
-    // Build query
-    const query: any = {};
-    
-    if (role) {
-      query.role = role;
-    }
-    
-    if (status === 'active') {
-      query.isActive = true;
-    } else if (status === 'inactive') {
-      query.isActive = false;
+    // If userId is provided, return single user
+    if (userId) {
+      const user = await User.findById(userId).select('-password');
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      return NextResponse.json(user);
     }
 
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { username: { $regex: search, $options: 'i' } }
-      ];
-    }
+    // Build search query
+    const searchQuery = search
+      ? {
+          $or: [
+            { username: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } },
+            { name: { $regex: search, $options: 'i' } },
+          ],
+        }
+      : {};
 
-    // Get total count
-    const totalUsers = await User.countDocuments(query);
-    const totalPages = Math.ceil(totalUsers / limit);
-    
-    // Get users with pagination
-    const users = await User.find(query)
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    // Get paginated results
+    const skip = (page - 1) * limit;
+    const [users, total] = await Promise.all([
+      User.find(searchQuery)
+        .select('-password')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      User.countDocuments(searchQuery),
+    ]);
 
-    // Process users for response
-    const processedUsers = users.map(user => ({
+    // Transform _id to id
+    const transformedUsers = users.map(user => ({
+      ...user,
       id: user._id.toString(),
-      name: user.name || '',
-      email: user.email || '',
-      username: user.username || '',
-      role: user.role || 'USER',
-      isActive: typeof user.isActive === 'boolean' ? user.isActive : true,
-      lastLogin: user.lastLogin?.toISOString() || null,
-      createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
-      updatedAt: user.updatedAt?.toISOString() || new Date().toISOString()
+      _id: undefined
     }));
 
     return NextResponse.json({
-      users: processedUsers,
+      users: transformedUsers,
       pagination: {
         currentPage: page,
-        totalPages,
-        totalUsers,
-        pageSize: limit
-      }
+        totalPages: Math.ceil(total / limit),
+        totalUsers: total,
+        pageSize: limit,
+      },
     });
-
-  } catch (error) {
-    console.error('Error in GET /api/users:', error);
+  } catch (error: any) {
+    console.error('GET /api/users error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
+      { error: error.message || 'Internal server error' },
+      { status: error.message === 'Unauthorized' ? 401 : error.message === 'Forbidden: Requires SUPER_ADMIN role' ? 403 : 500 }
     );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const token = await getToken({ 
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET
-    });
-
-    if (!token || !token.role) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (token.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Connect to database
+    await checkAdminAuth();
     await connectDB();
 
-    const data = await request.json();
-    
+    const body = await request.json();
+    const { username, email, password, name, role } = body;
+
     // Validate required fields
-    if (!data.email || !data.name || !data.password || !data.role) {
+    if (!username || !email || !password) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Username, email, and password are required' },
         { status: 400 }
       );
     }
 
-    // Generate username from email
-    const username = data.email.split('@')[0].toLowerCase();
-    
-    // Check if email already exists
-    const existingUser = await User.findOne({ email: data.email.toLowerCase() });
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
+    });
+
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Email already exists' },
+        { error: 'Username or email already exists' },
         { status: 400 }
       );
     }
 
-    // Create user with Mongoose
-    const newUser = await User.create({
-      name: data.name,
-      email: data.email.toLowerCase(),
+    // Create new user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
       username,
-      password: data.password,
-      role: data.role,
+      email,
+      password: hashedPassword,
+      name,
+      role: role || 'USER',
       isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
     });
 
-    return NextResponse.json({
-      user: {
-        id: newUser._id.toString(),
-        name: newUser.name,
-        email: newUser.email,
-        username: newUser.username,
-        role: newUser.role,
-        isActive: newUser.isActive,
-        createdAt: newUser.createdAt.toISOString(),
-        updatedAt: newUser.updatedAt.toISOString()
-      }
-    });
+    // Remove password from response
+    const userResponse = user.toObject();
+    delete userResponse.password;
 
+    return NextResponse.json(userResponse, { status: 201 });
   } catch (error: any) {
-    console.error('Error in POST /api/users:', error);
+    console.error('POST /api/users error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: error.message === 'Unauthorized' ? 401 : error.message === 'Forbidden: Requires SUPER_ADMIN role' ? 403 : 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    await checkAdminAuth();
+    await connectDB();
+
+    const searchParams = request.nextUrl.searchParams;
+    const userId = searchParams.get('userId');
     
-    // Return validation errors if present
-    if (error.name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation Error', details: error.message },
-        { status: 400 }
-      );
-    }
-    
-    // Return duplicate key errors
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { error: 'Username already exists' },
-        { status: 400 }
-      );
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    const body = await request.json();
+    const updateData = { ...body };
+
+    // If updating password, hash it
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Transform _id to id
+    const transformedUser = {
+      ...user.toObject(),
+      id: user._id.toString(),
+      _id: undefined
+    };
+
+    return NextResponse.json(transformedUser);
+  } catch (error: any) {
+    console.error('PATCH /api/users error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
-      { status: 500 }
+      { error: error.message || 'Internal server error' },
+      { status: error.message === 'Unauthorized' ? 401 : error.message === 'Forbidden: Requires SUPER_ADMIN role' ? 403 : 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    await checkAdminAuth();
+    await connectDB();
+
+    const searchParams = request.nextUrl.searchParams;
+    const userId = searchParams.get('userId');
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'User deleted successfully' });
+  } catch (error: any) {
+    console.error('DELETE /api/users error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: error.message === 'Unauthorized' ? 401 : error.message === 'Forbidden: Requires SUPER_ADMIN role' ? 403 : 500 }
     );
   }
 }

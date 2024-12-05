@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   Users, 
@@ -8,44 +8,103 @@ import {
   Clock,
   ArrowUpRight,
   ArrowDownRight,
-  TrendingUp,
-  TrendingDown
+  TrendingUp
 } from 'lucide-react';
 import DashboardHeading from '@/components/shared/DashboardHeading';
+import { BarChart, LineChart } from '@/components/charts';
+
+interface AnalyticsData {
+  totalUsers: number;
+  newUsers: number;
+  activeSessions: number;
+  avgSessionTime: number;
+  conversionRate: number;
+  userGrowth: number;
+  sessionGrowth: number;
+  trafficSources: Array<{ source: string; count: number }>;
+  userActivity: Array<{ date: string; count: number }>;
+}
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('7d');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/superadmin/analytics?timeRange=${timeRange}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics data');
+        }
+        
+        const analyticsData = await response.json();
+        setData(analyticsData);
+      } catch (err) {
+        console.error('Error fetching analytics:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [timeRange]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-t-2 border-b-2 border-purple-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] p-8">
+        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
 
   const stats = [
     {
       name: 'Total Users',
-      value: '12,345',
-      change: '+12%',
-      trend: 'up',
+      value: data.totalUsers.toLocaleString(),
+      change: `${data.userGrowth >= 0 ? '+' : ''}${data.userGrowth.toFixed(1)}%`,
+      trend: data.userGrowth >= 0 ? 'up' : 'down',
       icon: Users,
       color: 'purple'
     },
     {
       name: 'Active Sessions',
-      value: '2,876',
-      change: '+25%',
-      trend: 'up',
+      value: data.activeSessions.toLocaleString(),
+      change: `${data.sessionGrowth >= 0 ? '+' : ''}${data.sessionGrowth.toFixed(1)}%`,
+      trend: data.sessionGrowth >= 0 ? 'up' : 'down',
       icon: Activity,
       color: 'blue'
     },
     {
       name: 'Avg. Session Time',
-      value: '24m 30s',
-      change: '-5%',
-      trend: 'down',
+      value: formatDuration(data.avgSessionTime),
+      change: '±0%',
+      trend: 'neutral',
       icon: Clock,
       color: 'green'
     },
     {
       name: 'Conversion Rate',
-      value: '3.2%',
-      change: '+8%',
-      trend: 'up',
+      value: `${data.conversionRate.toFixed(1)}%`,
+      change: '±0%',
+      trend: 'neutral',
       icon: TrendingUp,
       color: 'pink'
     }
@@ -92,56 +151,71 @@ export default function AnalyticsPage() {
                     <Icon className={`w-6 h-6 text-${stat.color}-400`} />
                   </div>
                   <div className={`flex items-center ${
-                    stat.trend === 'up' ? 'text-green-400' : 'text-red-400'
+                    stat.trend === 'up' ? 'text-green-400' : 
+                    stat.trend === 'down' ? 'text-red-400' : 
+                    'text-gray-400'
                   }`}>
                     <span className="text-sm font-medium">{stat.change}</span>
                     {stat.trend === 'up' ? (
                       <ArrowUpRight className="w-4 h-4 ml-1" />
-                    ) : (
+                    ) : stat.trend === 'down' ? (
                       <ArrowDownRight className="w-4 h-4 ml-1" />
-                    )}
+                    ) : null}
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-gray-200">{stat.value}</div>
-                <div className="mt-1 text-sm text-gray-400">{stat.name}</div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-semibold text-white">
+                    {stat.value}
+                  </h3>
+                  <p className="text-sm text-gray-400">{stat.name}</p>
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* User Activity Chart */}
           <div className="bg-[#13131f] rounded-xl p-6 border border-purple-500/10">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-200">User Activity</h2>
-              <select className="bg-[#1a1a27] text-gray-400 text-sm rounded-lg border border-purple-500/10 px-3 py-1.5 focus:outline-none focus:border-purple-500/30">
-                <option>Last 7 days</option>
-                <option>Last 30 days</option>
-                <option>Last 90 days</option>
-              </select>
+              <h3 className="text-lg font-semibold text-white">User Activity</h3>
+              <BarChart3 className="w-5 h-5 text-gray-400" />
             </div>
-            <div className="h-[300px] flex items-center justify-center text-gray-400">
-              Chart Component Here
+            <div className="h-[300px]">
+              <LineChart
+                data={data.userActivity}
+                xKey="date"
+                yKey="count"
+                color="#8b5cf6"
+              />
             </div>
           </div>
 
-          {/* Traffic Sources */}
+          {/* Traffic Sources Chart */}
           <div className="bg-[#13131f] rounded-xl p-6 border border-purple-500/10">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-200">Traffic Sources</h2>
-              <select className="bg-[#1a1a27] text-gray-400 text-sm rounded-lg border border-purple-500/10 px-3 py-1.5 focus:outline-none focus:border-purple-500/30">
-                <option>Last 7 days</option>
-                <option>Last 30 days</option>
-                <option>Last 90 days</option>
-              </select>
+              <h3 className="text-lg font-semibold text-white">Traffic Sources</h3>
+              <BarChart3 className="w-5 h-5 text-gray-400" />
             </div>
-            <div className="h-[300px] flex items-center justify-center text-gray-400">
-              Chart Component Here
+            <div className="h-[300px]">
+              <BarChart
+                data={data.trafficSources}
+                xKey="source"
+                yKey="count"
+                color="#8b5cf6"
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
 }

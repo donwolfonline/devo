@@ -17,11 +17,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
-      <body className={`${inter.className} bg-[#0a0a0f] min-h-screen antialiased`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen antialiased`} suppressHydrationWarning>
         <Providers>
           <Navbar />
-          <main className="pt-16">
+          <main>
             {children}
           </main>
         </Providers>

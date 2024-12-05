@@ -68,53 +68,71 @@ const FloatingDots = () => {
       <style jsx>{`
         .floating-dot {
           position: absolute;
-          width: 4px;
-          height: 4px;
+          width: 6px;
+          height: 6px;
           border-radius: 9999px;
-          background-color: rgba(147, 51, 234, 0.3);
-          filter: blur(1px);
+          background-color: rgba(168, 85, 247, 0.6);
+          box-shadow: 
+            0 0 20px 4px rgba(168, 85, 247, 0.5),
+            0 0 35px 6px rgba(168, 85, 247, 0.4),
+            0 0 50px 8px rgba(168, 85, 247, 0.3),
+            0 0 65px 10px rgba(168, 85, 247, 0.2);
+          filter: blur(0.5px);
+          animation-timing-function: ease-in-out;
+          animation-iteration-count: infinite;
+          opacity: 0;
+          animation: glow 4s infinite;
+          mix-blend-mode: screen;
+        }
+
+        @keyframes glow {
+          0% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.3); }
+          100% { opacity: 0.3; transform: scale(1); }
         }
         
-        .dot-0 { left: 10%; top: 10%; animation: float1 4s ease-in-out infinite; }
-        .dot-1 { left: 20%; top: 20%; animation: float2 4s ease-in-out infinite; }
-        .dot-2 { left: 30%; top: 30%; animation: float1 4s ease-in-out infinite; }
-        .dot-3 { left: 40%; top: 40%; animation: float2 4s ease-in-out infinite; }
-        .dot-4 { left: 50%; top: 50%; animation: float1 4s ease-in-out infinite; }
-        .dot-5 { left: 60%; top: 60%; animation: float2 4s ease-in-out infinite; }
-        .dot-6 { left: 70%; top: 70%; animation: float1 4s ease-in-out infinite; }
-        .dot-7 { left: 80%; top: 80%; animation: float2 4s ease-in-out infinite; }
-        .dot-8 { left: 90%; top: 90%; animation: float1 4s ease-in-out infinite; }
-        .dot-9 { left: 15%; top: 85%; animation: float2 4s ease-in-out infinite; }
-        .dot-10 { left: 25%; top: 75%; animation: float1 4s ease-in-out infinite; }
-        .dot-11 { left: 35%; top: 65%; animation: float2 4s ease-in-out infinite; }
-        .dot-12 { left: 45%; top: 55%; animation: float1 4s ease-in-out infinite; }
-        .dot-13 { left: 55%; top: 45%; animation: float2 4s ease-in-out infinite; }
-        .dot-14 { left: 65%; top: 35%; animation: float1 4s ease-in-out infinite; }
-        .dot-15 { left: 75%; top: 25%; animation: float2 4s ease-in-out infinite; }
-        .dot-16 { left: 85%; top: 15%; animation: float1 4s ease-in-out infinite; }
-        .dot-17 { left: 95%; top: 5%; animation: float2 4s ease-in-out infinite; }
-        .dot-18 { left: 5%; top: 95%; animation: float1 4s ease-in-out infinite; }
-        .dot-19 { left: 15%; top: 45%; animation: float2 4s ease-in-out infinite; }
-        .dot-20 { left: 25%; top: 35%; animation: float1 4s ease-in-out infinite; }
-        .dot-21 { left: 35%; top: 25%; animation: float2 4s ease-in-out infinite; }
-        .dot-22 { left: 45%; top: 15%; animation: float1 4s ease-in-out infinite; }
-        .dot-23 { left: 55%; top: 85%; animation: float2 4s ease-in-out infinite; }
-        .dot-24 { left: 65%; top: 75%; animation: float1 4s ease-in-out infinite; }
-        .dot-25 { left: 75%; top: 65%; animation: float2 4s ease-in-out infinite; }
-        .dot-26 { left: 85%; top: 55%; animation: float1 4s ease-in-out infinite; }
-        .dot-27 { left: 95%; top: 45%; animation: float2 4s ease-in-out infinite; }
-        .dot-28 { left: 5%; top: 35%; animation: float1 4s ease-in-out infinite; }
-        .dot-29 { left: 15%; top: 25%; animation: float2 4s ease-in-out infinite; }
-
         @keyframes float1 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(10px, -10px); }
+          0% { transform: translate(0, 0); }
+          50% { transform: translate(15px, 15px); }
+          100% { transform: translate(0, 0); }
         }
-
+        
         @keyframes float2 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-10px, 10px); }
+          0% { transform: translate(0, 0); }
+          50% { transform: translate(-15px, 15px); }
+          100% { transform: translate(0, 0); }
         }
+        
+        .dot-0 { left: 10%; top: 10%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-1 { left: 20%; top: 20%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-2 { left: 30%; top: 30%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-3 { left: 40%; top: 40%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-4 { left: 50%; top: 50%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-5 { left: 60%; top: 60%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-6 { left: 70%; top: 70%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-7 { left: 80%; top: 80%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-8 { left: 90%; top: 90%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-9 { left: 15%; top: 85%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-10 { left: 25%; top: 75%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-11 { left: 35%; top: 65%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-12 { left: 45%; top: 55%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-13 { left: 55%; top: 45%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-14 { left: 65%; top: 35%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-15 { left: 75%; top: 25%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-16 { left: 85%; top: 15%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-17 { left: 95%; top: 5%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-18 { left: 5%; top: 95%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-19 { left: 15%; top: 45%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-20 { left: 25%; top: 35%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-21 { left: 35%; top: 25%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-22 { left: 45%; top: 15%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-23 { left: 55%; top: 85%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-24 { left: 65%; top: 75%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-25 { left: 75%; top: 65%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-26 { left: 85%; top: 55%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-27 { left: 95%; top: 45%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-28 { left: 5%; top: 35%; animation: float1 6s ease-in-out infinite, glow 4s infinite; }
+        .dot-29 { left: 15%; top: 25%; animation: float2 6s ease-in-out infinite, glow 4s infinite; }
       `}</style>
     </div>
   );

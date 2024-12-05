@@ -29,14 +29,16 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
         username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        type: { label: "Type", type: "text" }
       },
       async authorize(credentials) {
         try {
@@ -51,35 +53,40 @@ export const authOptions: NextAuthOptions = {
               { email: credentials.username.toLowerCase() },
               { username: credentials.username.toLowerCase() }
             ]
-          });
+          }).select('+password');
 
           if (!user) {
             throw new Error('Invalid credentials');
           }
 
-          const isValid = await bcrypt.compare(credentials.password, user.password);
+          // Check for superadmin authentication
+          if (credentials.type === 'superadmin' && user.role !== 'SUPER_ADMIN') {
+            throw new Error('Invalid superadmin credentials');
+          }
 
-          if (!isValid) {
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          if (!isPasswordValid) {
             throw new Error('Invalid credentials');
           }
 
           return {
             id: user._id.toString(),
-            name: user.name,
-            email: user.email,
+            name: user.name || null,
+            email: user.email || null,
+            image: user.image || null,
             role: user.role,
-            username: user.username,
-            image: user.image
+            username: user.username
           };
-        } catch (error: any) {
-          throw new Error(error.message || 'Authentication failed');
+        } catch (error) {
+          console.error('Auth error:', error);
+          throw error;
         }
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
-      if (user && account) {
+    async jwt({ token, user }) {
+      if (user) {
         token.id = user.id;
         token.role = user.role;
         token.username = user.username;
@@ -87,12 +94,24 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token) {
+      if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.username = token.username as string;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Always allow URLs starting with base URL
+      if (url.startsWith(baseUrl)) return url;
+
+      // Handle relative URLs
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+
+      // Default to base URL
+      return baseUrl;
     }
   },
   pages: {

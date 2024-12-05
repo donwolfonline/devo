@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authenticateAPI } from '@/lib/auth-helpers';
 import { connectDB } from '@/lib/mongodb';
 
 interface SystemSettings {
@@ -35,106 +34,133 @@ interface SystemSettings {
     sessionTimeout: string;
     twoFactorAuth: boolean;
   };
+  performance: {
+    performanceMonitoring: boolean;
+    resourceThreshold: string;
+  };
+  auditLog: {
+    auditLogRetention: string;
+    enableAuditLog: boolean;
+  };
+  apiRateLimit: {
+    apiRateLimit: string;
+    rateLimitWindow: string;
+  };
+  maintenance: {
+    maintenanceWindow: string;
+    maintenanceDuration: string;
+  };
+  backup: {
+    backupSchedule: string;
+  };
 }
 
-// Helper function to check admin authorization
-async function checkAdminAuth() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    throw new Error('Unauthorized');
+const defaultSettings: SystemSettings = {
+  email: {
+    smtpServer: '',
+    smtpPort: '',
+    smtpEncryption: '',
+    senderEmail: '',
+    senderName: '',
+    smtpUsername: '',
+    smtpPassword: '',
+    emailAuthentication: true
+  },
+  data: {
+    dataRetention: '30',
+    automatedBackups: true,
+    backupFrequency: 'daily',
+    storageLocation: 'local',
+    dataEncryption: true,
+    backupRetention: '5'
+  },
+  notifications: {
+    emailNotifications: true,
+    securityAlerts: true,
+    maintenanceUpdates: false,
+    systemNotifications: true,
+    userActivityAlerts: true,
+    performanceAlerts: false
+  },
+  security: {
+    passwordLength: '8',
+    sessionTimeout: '30',
+    twoFactorAuth: false
+  },
+  performance: {
+    performanceMonitoring: true,
+    resourceThreshold: '80'
+  },
+  auditLog: {
+    auditLogRetention: '90',
+    enableAuditLog: true
+  },
+  apiRateLimit: {
+    apiRateLimit: '1000',
+    rateLimitWindow: '60'
+  },
+  maintenance: {
+    maintenanceWindow: '',
+    maintenanceDuration: '60'
+  },
+  backup: {
+    backupSchedule: '0 0 * * *'
   }
-  if (session.user.role !== 'SUPER_ADMIN') {
-    throw new Error('Forbidden: Requires SUPER_ADMIN role');
-  }
-  return session;
-}
+};
 
 export async function GET(request: NextRequest) {
   try {
-    await checkAdminAuth();
-    const { db } = await connectDB();
+    const { authenticated, error } = await authenticateAPI(request, 'SUPER_ADMIN');
+    
+    if (!authenticated) {
+      return NextResponse.json({ error }, { status: 401 });
+    }
 
-    // Get settings from database
-    const settings = await db.collection('systemSettings').findOne({});
+    const connection = await connectDB();
+    const settings = await connection.db.collection('systemSettings').findOne({});
 
-    // Return settings or default values
-    return NextResponse.json(settings || {
-      email: {
-        smtpServer: '',
-        smtpPort: '',
-        smtpEncryption: '',
-        senderEmail: '',
-        senderName: '',
-        smtpUsername: '',
-        smtpPassword: '',
-        emailAuthentication: true
-      },
-      data: {
-        dataRetention: '30',
-        automatedBackups: true,
-        backupFrequency: 'daily',
-        storageLocation: 'local',
-        dataEncryption: true,
-        backupRetention: '5'
-      },
-      notifications: {
-        emailNotifications: true,
-        securityAlerts: true,
-        maintenanceUpdates: false,
-        systemNotifications: true,
-        userActivityAlerts: true,
-        performanceAlerts: false
-      },
-      security: {
-        passwordLength: '8',
-        sessionTimeout: '30',
-        twoFactorAuth: false
-      }
-    });
+    return NextResponse.json(settings || defaultSettings);
   } catch (error: any) {
     console.error('Error in GET /api/settings:', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: error.message === 'Unauthorized' ? 401 : error.message === 'Forbidden: Requires SUPER_ADMIN role' ? 403 : 500 }
-    );
+    return NextResponse.json(defaultSettings);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await checkAdminAuth();
-    const { db } = await connectDB();
-
-    const settings: SystemSettings = await request.json();
-
-    // Validate settings
-    if (!settings || typeof settings !== 'object') {
-      return NextResponse.json(
-        { error: 'Invalid settings format' },
-        { status: 400 }
-      );
+    const { authenticated, error } = await authenticateAPI(request, 'SUPER_ADMIN');
+    
+    if (!authenticated) {
+      return NextResponse.json({ error }, { status: 401 });
     }
 
-    // Update settings in database
-    await db.collection('systemSettings').updateOne(
+    const settings: SystemSettings = await request.json();
+    const connection = await connectDB();
+    
+    await connection.db.collection('systemSettings').updateOne(
       {},
       { $set: settings },
       { upsert: true }
     );
 
-    return NextResponse.json({ message: 'Settings updated successfully' });
+    return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     console.error('Error in POST /api/settings:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
-      { status: error.message === 'Unauthorized' ? 401 : error.message === 'Forbidden: Requires SUPER_ADMIN role' ? 403 : 500 }
+      { error: 'Failed to save settings' },
+      { status: 500 }
     );
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    await checkAdminAuth();
+    const { authenticated, error } = await authenticateAPI(request, 'SUPER_ADMIN');
+    
+    if (!authenticated) {
+      return NextResponse.json({ error }, { status: 401 });
+    }
+
     const emailSettings = await request.json();
     
     // Test email configuration

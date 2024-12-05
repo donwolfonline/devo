@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
-import bcrypt from 'bcryptjs';
 
 export async function POST() {
   try {
@@ -16,19 +15,19 @@ export async function POST() {
       });
     }
 
-    // Create superadmin user
-    const password = 'SuperAdmin123!';
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create superadmin user with raw password
+    const password = 'admin123';
     
-    const superadmin = await User.create({
+    const superadmin = new User({
       username: 'superadmin',
       email: 'superadmin@example.com',
-      password: hashedPassword,
+      password: password, // Let the User model handle hashing
       name: 'Super Admin',
       role: 'SUPER_ADMIN',
-      isActive: true,
-      failedLoginAttempts: 0
+      isActive: true // Explicitly set isActive to true
     });
+
+    await superadmin.save();
 
     // Remove password from response
     const { password: _, ...superadminWithoutPassword } = superadmin.toObject();

@@ -1,23 +1,21 @@
 'use client';
 
+import { useState } from 'react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { SpaceBackground } from '@/components/SpaceBackground';
 import { MouseFollower, FloatingDots } from '@/components/BackgroundElements';
-import { Loader2 } from 'lucide-react';
-import { useState, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 
-function SignInContent() {
+export default function SignIn() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,19 +23,26 @@ function SignInContent() {
     setError('');
 
     try {
+      console.log('Attempting login with:', { username });
       const result = await signIn('credentials', {
-        redirect: false,
-        email,
+        username: username.toLowerCase(),
         password,
+        type: 'user',
+        redirect: false,
+        callbackUrl
       });
 
+      console.log('Login result:', result);
+
       if (result?.error) {
-        setError(result.error);
-      } else {
+        setError('Invalid credentials');
+      } else if (result?.ok) {
         router.push(callbackUrl);
+        router.refresh();
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      console.error('Login error:', err);
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +67,7 @@ function SignInContent() {
           <div className="w-full max-w-md">
             <div className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
               <h2 className="text-3xl font-bold mb-6 bg-gradient-to-b from-white to-gray-300 bg-clip-text text-transparent">
-                Welcome back
+                Welcome Back
               </h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
@@ -71,19 +76,23 @@ function SignInContent() {
                   </div>
                 )}
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-300/90 mb-2">
-                    Email Address
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-300/90 mb-2">
+                    Username
                   </label>
                   <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
+                    minLength={3}
+                    maxLength={20}
+                    pattern="^[a-zA-Z0-9_]+$"
+                    title="Username must be 3-20 characters, containing only letters, numbers, and underscores"
                     className="w-full px-4 py-2 rounded-lg bg-white/5 border border-purple-500/20 text-white placeholder-gray-400
                              focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-transparent
                              transition-colors"
-                    placeholder="Enter your email"
+                    placeholder="Enter your username"
                   />
                 </div>
                 <div>
@@ -96,19 +105,12 @@ function SignInContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={8}
                     className="w-full px-4 py-2 rounded-lg bg-white/5 border border-purple-500/20 text-white placeholder-gray-400
                              focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-transparent
                              transition-colors"
                     placeholder="Enter your password"
                   />
-                  <div className="mt-2 flex justify-end">
-                    <Link
-                      href="/auth/forgot-password"
-                      className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
                 </div>
                 <div>
                   <button
@@ -128,7 +130,7 @@ function SignInContent() {
                 <div className="mt-6 text-center text-sm text-gray-300/80">
                   Don't have an account?{' '}
                   <Link href="/auth/sign-up" className="text-purple-400 hover:text-purple-300 transition-colors">
-                    Sign up
+                    Sign up here
                   </Link>
                 </div>
               </form>
@@ -137,13 +139,5 @@ function SignInContent() {
         </div>
       </main>
     </div>
-  );
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SignInContent />
-    </Suspense>
   );
 }

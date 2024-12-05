@@ -5,6 +5,7 @@ import { ArrowRight, Code, Palette, Layout, Smartphone, Share, Globe } from 'luc
 import Link from 'next/link';
 import { MouseFollower, FloatingDots } from '@/components/BackgroundElements';
 import { SpaceBackground } from '@/components/SpaceBackground';
+import Navbar from '@/components/Navbar';
 
 const templates = [
   {
@@ -98,18 +99,19 @@ export default function LinkInBio() {
 
         {/* Content */}
         <div className="relative z-10">
+          <Navbar />
           {/* Hero Section */}
-          <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-16">
             <motion.div 
               className="max-w-4xl mx-auto text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-300 mb-6">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-gray-100 via-purple-100 to-purple-400 drop-shadow-[0_0_25px_rgba(168,85,247,0.2)] [text-shadow:_0_1px_20px_rgb(168_85_247_/_20%)]">
                 Link in Bio Templates
               </h1>
-              <p className="text-lg sm:text-xl lg:text-2xl text-gray-300/90 mb-8">
+              <p className="text-lg sm:text-xl text-gray-300 mb-12">
                 Create a stunning link in bio page that matches your style and showcases your work.
               </p>
               <Link 

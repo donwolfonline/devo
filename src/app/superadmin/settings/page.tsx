@@ -186,6 +186,8 @@ export default function SettingsPage() {
                   value={settings.email.smtpServer}
                   onChange={(e) => updateSettings('email', 'smtpServer', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Enter SMTP server address"
+                  title="SMTP server configuration"
                 />
               </div>
               <div>
@@ -195,6 +197,8 @@ export default function SettingsPage() {
                   value={settings.email.smtpPort}
                   onChange={(e) => updateSettings('email', 'smtpPort', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Enter SMTP port number"
+                  title="SMTP port configuration"
                 />
               </div>
             </div>
@@ -217,6 +221,8 @@ export default function SettingsPage() {
                   value={settings.data.dataRetention}
                   onChange={(e) => updateSettings('data', 'dataRetention', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  title="Number of days to retain data"
+                  placeholder="Enter data retention period"
                 />
               </div>
               <div>
@@ -225,7 +231,9 @@ export default function SettingsPage() {
                   value={settings.data.backupFrequency}
                   onChange={(e) => updateSettings('data', 'backupFrequency', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  title="How often backups should be performed"
                 >
+                  <option value="" disabled>Select backup frequency</option>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
@@ -241,11 +249,16 @@ export default function SettingsPage() {
               <div key={key} className="flex items-center">
                 <input
                   type="checkbox"
+                  id={`notification-${key}`}
                   checked={value}
                   onChange={(e) => updateSettings('notifications', key, e.target.checked)}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  title={`Toggle ${key.replace(/([A-Z])/g, ' $1').trim()} notifications`}
                 />
-                <label className="ml-2 block text-sm text-gray-900 capitalize">
+                <label 
+                  htmlFor={`notification-${key}`} 
+                  className="ml-2 block text-sm text-gray-900 capitalize"
+                >
                   {key.replace(/([A-Z])/g, ' $1').trim()}
                 </label>
               </div>
@@ -263,6 +276,8 @@ export default function SettingsPage() {
                   value={settings.security.passwordLength}
                   onChange={(e) => updateSettings('security', 'passwordLength', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  title="Set the minimum required length for user passwords"
+                  placeholder="e.g., 8"
                 />
               </div>
               <div>
@@ -272,6 +287,8 @@ export default function SettingsPage() {
                   value={settings.security.sessionTimeout}
                   onChange={(e) => updateSettings('security', 'sessionTimeout', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  title="Set the duration after which user sessions will automatically expire"
+                  placeholder="e.g., 30"
                 />
               </div>
             </div>
